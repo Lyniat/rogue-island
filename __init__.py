@@ -161,13 +161,13 @@ objects = [player]
 
 # generate map (at this point it's not drawn to the screen)
 global map
-map = island_generator.make_map(MAP_SIZE)
-voroni.generate_voronoi_diagram(512)
+#map = island_generator.make_map(MAP_SIZE)
+map = voroni.generate_voronoi_diagram(1024)
 #biome_generator.make_map(MAP_SIZE)
 
 
-player.x = island_generator.get_start_position()[0]
-player.y = island_generator.get_start_position()[1]
+player.x = voroni.get_start_position()[0]
+player.y = voroni.get_start_position()[1]
 
 make_visual_map()
 
