@@ -1,19 +1,22 @@
 import libtcodpy as libtcod
 import tiles
+import biome_generator
 import island_generator
+import voroni_generator as voroni
+import color
+import math
 
 # actual size of the window
 SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 100
 
 # size of the map
-MAP_WIDTH = 256
-MAP_HEIGHT = 256
+MAP_SIZE = 256
 
 VISUAL_WIDTH = 150
 VISUAL_HEIGHT = 90
 
-LIMIT_FPS = 20  # 20 frames-per-second maximum
+LIMIT_FPS = 120  # 20 frames-per-second maximum
 
 FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
@@ -23,9 +26,7 @@ color_dark_wall = libtcod.Color(255, 0, 0)
 color_light_wall = libtcod.Color(130, 110, 50)
 color_dark_ground = libtcod.Color(50, 50, 150)
 color_light_ground = libtcod.Color(200, 180, 50)
-color_blue = libtcod.Color(0, 0, 255)
-color_navy = libtcod.Color(0, 0, 127)
-color_green = libtcod.Color(0, 127, 0)
+
 
 
 class Object:
@@ -73,7 +74,7 @@ def make_visual_map():
     global visual
 
     # fill map with "unblocked" tiles
-    visual = [[tiles.Tile(False)
+    visual = [[tiles.Tile(0,False)
                for y in range(VISUAL_HEIGHT)]
               for x in range(VISUAL_WIDTH)]
 
@@ -87,19 +88,26 @@ def render_all():
     # go through all tiles, and set their background color
     for y in range(VISUAL_HEIGHT):
         for x in range(VISUAL_WIDTH):
-            wall = visual[x][y].blocked
-            if wall:
+            id = visual[x][y].id
+            if id == 0:
                 # libtcod.console_set_char_background(con, x, y, color_dark_wall,libtcod.BKGND_SET)
                 random = libtcod.random_get_int(0, 0, 1)
                 if random == 0:
-                    libtcod.console_set_default_foreground(con, color_blue)
+                    libtcod.console_set_default_foreground(con, color.blue)
                 else:
-                    libtcod.console_set_default_foreground(con, color_navy)
+                    libtcod.console_set_default_foreground(con, color.navy)
                 libtcod.console_put_char(con, x, y, '~', libtcod.BKGND_NONE)
-            else:
+            if id == 2:
                 # libtcod.console_set_char_background(con, x, y, color_dark_ground, libtcod.BKGND_SET)
-                libtcod.console_set_default_foreground(con, color_green)
+                #if math.sin(x%(y+1)):
+                libtcod.console_set_default_foreground(con, color.green)
+                #else:
+                    #libtcod.console_set_default_foreground(con, color.lime)
                 libtcod.console_put_char(con, x, y, ',', libtcod.BKGND_NONE)
+            if id == 1:
+                libtcod.console_set_default_foreground(con, color.yellow)
+                libtcod.console_put_char(con, x, y, '#', libtcod.BKGND_NONE)
+
 
     # draw all objects in the list
     for object in objects:
@@ -153,7 +161,10 @@ objects = [player]
 
 # generate map (at this point it's not drawn to the screen)
 global map
-map = island_generator.make_map(MAP_WIDTH, MAP_HEIGHT)
+map = island_generator.make_map(MAP_SIZE)
+voroni.generate_voronoi_diagram(512)
+#biome_generator.make_map(MAP_SIZE)
+
 
 player.x = island_generator.get_start_position()[0]
 player.y = island_generator.get_start_position()[1]
