@@ -1,168 +1,210 @@
-import libtcodpy as libtcod
-import tiles
+import random
 import math
 import Image
+import tiles
 
 
-def make_map(size):
+def update_info(text, libtcod):
+    libtcod.console_print(0, 1, 1, text)
+
+    libtcod.console_flush()
+
+
+# generate voroni diagramm
+def generate_voronoi_diagram(size, libtcod):
     global start_x, start_y
+    start_x = 12
+    start_y = 12
     global new_map
-    new_map = [[tiles.Tile(0,False)
+    new_map = [[tiles.Tile(0, False)
                 for y in range(size)]
                for x in range(size)]
-    heightmap = [[0
-                  for y in range(size)]
-                 for x in range(size)]
     tilemap = [[0
                 for y in range(size)]
-                for x in range(size)]
+               for x in range(size)]
 
-    random_x = libtcod.random_get_int(0,0,99999999)
-    random_y = random_x / 2
+    num_cells = size / 3
+    nx = []
+    ny = []
+    nt = []
+    for i in range(num_cells):
+        rx = random.randrange(size)
+        ry = random.randrange(size)
+        nx.append(rx)
+        ny.append(ry)
 
-    for x in range(size):
-        for y in range(size):
-
-            # create map
-            height_value = math.sqrt((x - size / 2) ** 2 + (y - size / 2) ** 2)
-
-            # strand zerfransen klein
-            height_value -= math.fabs(math.sin((x + random_x) / 3) * 2)
-
-            height_value -= math.fabs(math.cos((y + random_y) / 4) * 2)
-
-            #invert heightmap
-            height_value = size/1.1 - height_value
-
-            print random_x
-
-            # strand zerfransen gross
-            height_value -= math.sin((x + random_x)/9) * 4
-
-            height_value -= math.sin((y + random_y**1.2) / 10) * 4
+        distance = math.sqrt((rx - size / 2) ** 2 + (ry - size / 2) ** 2)
+        if distance > size / 2.5:
+            nt.append(0)
 
 
-            heightmap[x][y] = height_value
-
-
-    #extra bay
-    for x in range(int(size/2.4)):
-        for y in range(int(size/2.4)):
-
-            height_value = math.sqrt((x - size / 4.8) ** 2 + (y - size / 4.8) ** 2)
-
-            height_value = size/5.2 - height_value
-
-            if height_value < 0:
-                height_value = 0
-
-            heightmap[x][y] -= height_value*1.5
-
-    #extra island
-    for x in range(size/3):
-        for y in range(size/3):
-
-            height_value = math.sqrt((x - size / 6) ** 2 + (y - size / 6) ** 2)
-
-            height_value = size/7 - height_value
-
-            if height_value < 0:
-                height_value = 0
-
-            heightmap[x][y] += height_value*3
-
-    modulo_2 = random_x % 2
-
-    modulo_5 = random_x % 5
-
-    #schlucht 1
-    for y in range(size/(2 + modulo_2)):
-        y_size = y/14
-        if y_size < 0:
-            y_size = 0
-        for x in range(-7 + y_size ,7 - y_size):
-            extra_x = int(math.sin(y/5)*4)+int(math.cos(y/11)*4)
-            heightmap[size/(2 + modulo_5) - x + extra_x][size - y -1] = 0#-= (8 - math.fabs(x))*2;
-
-    #schlucht 2
-    for y in range(size/(2+modulo_2)):
-        y_size = y/14
-        if y_size < 0:
-            y_size = 0
-        for x in range(-7 + y_size ,7 - y_size):
-            extra_x = int(math.sin(y/5)*4)+int(math.cos(y/11)*4)
-            heightmap[size - y -1][size/(2 + modulo_5) - x + extra_x] = 0#-= (8 - math.fabs(x))*2;
-
-
-###################
-#Print height to png
-###################
-
-    img = Image.new( 'RGB', (size,size), "white")
-    pixels = img.load() # create the pixel map
-
-    for x in range(size):    # for every pixel:
-        for y in range(size):
-            pixels[x,y] = (int(heightmap[x][y]),int(heightmap[x][y])/2,255 - int(heightmap[x][y]))
-
-    img.save('height_map.png')
-
-###################
-#Calculate tiles
-###################
-
-    for x in range(size):
-        for y in range(size):
-
-            height_value = heightmap[x][y]
-
-            if height_value < size / 2.2:
-                tilemap[x][y] = 0
-            elif size /2.2 <= height_value < size/2.1:
-                tilemap[x][y] = 1
+        elif size / 2.5 > distance > size / 3.2:
+            r = random.randrange(4)
+            if r == 0:
+                nt.append(0)
             else:
-                tilemap[x][y] = 2
+                nt.append(2)
+        else:
+            nt.append(2)
+
+    for y in range(size):
+        for x in range(size):
+            dmin = math.hypot(size - 1, size - 1)
+            j = -1
+            for i in range(num_cells):
+                d = math.hypot(nx[i] - x, ny[i] - y)
+                if d < dmin:
+                    dmin = d
+                    j = i
+            tilemap[x][y] = nt[j]
+
+        update_text = "generating terrain: " + str(((y * 1.0) / size) * 100) + "%"
+
+        print(update_text)
+
+        # update_info("test",libtcod)
+
+    #prevent island from colliding with wall
+    for y in range(size):
+        for x in range(size):
+            dist = math.sqrt((size/2 -x)**2+(size/2 -y)**2)
+            if dist > (size/2 - 6):
+                tilemap[x][y] = 0
 
 
-    #dreckige sandteile entfernen
-    for x in range(1,size-1):
-        for y in range(1,size-1):
+    # add sand in grass
+    for x in range(4, size - 4):
+        for y in range(4, size - 4):
+
+            val = tilemap[x][y]
+
+            if val == 0:
+                for xs in range(-3, 3):
+                    for ys in range(-3, 3):
+                        xt = x + xs
+                        yt = y + ys
+                        if tilemap[xt][yt] == 2:
+                            r = random.randrange(5)
+                            if r == 0:
+                                tilemap[xt][yt] = 1
+
+        update_text = "adding sand: " + str(((x * 1.0) / (size - 9)) * 100) + "%"
+
+        print(update_text)
+
+    # add sand in water
+    for x in range(9, size - 9):
+        for y in range(9, size - 9):
+
+            val = tilemap[x][y]
+
+            if val == 2:
+                for xs in range(-9, 9):
+                    for ys in range(-9, 9):
+                        xt = x + xs
+                        yt = y + ys
+                        if tilemap[xt][yt] == 0:
+                            r = random.randrange(5)
+                            if r == 0:
+                                tilemap[xt][yt] = 1
+        update_text = "removing water: " + str(((x * 1.0) / (size - 19)) * 100) + "%"
+
+        print(update_text)
+
+    # smooth sand
+    for x in range(4, size - 4):
+        for y in range(4, size - 4):
+
             counter = 0
-            if tilemap[x][y] == 1:
-                if tilemap[x + 1][y] == 0:
-                    counter += 1
-                if tilemap[x - 1][y] == 0:
-                    counter += 1
-                if tilemap[x][y + 1] == 0:
-                    counter += 1
-                if tilemap[x][y + 1] == 0:
-                    counter += 1
 
-                if counter >= 3:
-                    tilemap[x][y] = 0
+            if tilemap[x + 1][y] == 0:
+                counter += 1
+            if tilemap[x - 1][y] == 0:
+                counter += 1
+            if tilemap[x][y + 1] == 0:
+                counter += 1
+            if tilemap[x][y - 1] == 0:
+                counter += 1
 
+            if counter > 2:
+                tilemap[x][y] = 0
+        update_text = "smoothing sand: " + str(((x * 1.0) / (size - 9)) * 100) + "%"
 
+        print(update_text)
 
-###################
-#Print tiles to png
-###################
+    for i in range(5):
+        x = random.randrange(size / 3, size - size / 3)
+        y = random.randrange(size / 3, size - size / 3)
+        # create river
+        while 1 == 1:
+            test_x_pos = 0
+            test_y_pos = 0
 
-    img = Image.new( 'RGB', (size,size), "white")
-    pixels = img.load() # create the pixel map
+            test_x_neg = 0
+            test_y_neg = 0
 
-    for x in range(size):    # for every pixel:
-        for y in range(size):
-            if tilemap[x][y] == 0:
-                pixels[x,y] = (0,0,255)
-            elif tilemap[x][y] == 1:
-                pixels[x,y] = (255,255,0)
-            elif tilemap[x][y] == 2:
-                pixels[x,y] = (0,255,0)
+            test_x = 0
+            test_y = 0
 
+            while not tilemap[x + test_x_pos][y] == 0:
+                test_x_pos += 1
+            print("xpos: " + str(test_x_pos))
 
-    img.save('tile_map.png')
+            while not tilemap[x][y + test_y_pos] == 0:
+                test_y_pos += 1
+            print("ypos: " + str(test_y_pos))
 
+            while not tilemap[x + test_x_neg][y] == 0:
+                test_x_neg -= 1
+            print("xneg: " + str(test_x_neg))
 
+            while not tilemap[x][y + test_y_neg] == 0:
+                test_y_neg -= 1
+            print("yneg: " + str(test_y_neg))
+
+            #r = random.randrange(0, 2)
+            #if r == 1:
+                #test_x_neg, test_y_pos = test_y_pos, test_x_neg
+                #test_x_pos, test_y_neg = test_x_neg, test_y_pos
+
+            if test_x_pos < math.fabs(test_x_neg):
+                test_x = test_x_pos
+                print("xpos < xneg ==> xpos")
+            else:
+                test_x = test_x_neg
+                print("xneg < xpos==> xneg")
+
+            if test_y_pos < math.fabs(test_y_neg):
+                test_y = test_y_pos
+                print("ypos < yneg ==> ypos")
+            else:
+                test_y = test_y_neg
+                print("yneg < ypos==> yneg")
+
+            if math.fabs(test_x) < math.fabs(test_y):
+                x += test_x / math.fabs(test_x)
+                print("x < y ==> x")
+            else:
+                y += test_y / math.fabs(test_y)
+                print("y < x ==> y")
+
+            x += random.randrange(-1,1)
+            y += random.randrange(-1,1)
+
+            x = int(x)
+            y = int(y)
+
+            print(x)
+            print(y)
+
+            if tilemap[x][y]== 0:
+                break
+
+            tilemap[x + 1][y] = 3
+            tilemap[x - 1][y] = 3
+            tilemap[x][y + 1] = 3
+            tilemap[x][y - 1] = 3
+            tilemap[x][y] = 3
 
     for x in range(size):
         for y in range(size):
@@ -171,9 +213,25 @@ def make_map(size):
 
             new_map[x][y].id = tile_value
 
-            if tile_value == 2:
+            if tile_value == 1:
                 start_x = x
                 start_y = y
+
+    img = Image.new('RGB', (size, size), "white")
+    pixels = img.load()  # create the pixel map
+
+    for x in range(size):  # for every pixel:
+        for y in range(size):
+            if tilemap[x][y] == 0:
+                pixels[x, y] = (0, 0, 255)
+            elif tilemap[x][y] == 1:
+                pixels[x, y] = (255, 255, 0)
+            elif tilemap[x][y] == 2:
+                pixels[x, y] = (0, 255, 0)
+            elif tilemap[x][y] == 3:
+                pixels[x, y] = (63, 63, 255)
+
+    img.save('tile_map.png')
 
     return new_map
 

@@ -2,7 +2,6 @@ import libtcodpy as libtcod
 import tiles
 import biome_generator
 import island_generator
-import voroni_generator as voroni
 import color
 import math
 
@@ -11,7 +10,7 @@ SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 100
 
 # size of the map
-MAP_SIZE = 256
+MAP_SIZE = 512
 
 VISUAL_WIDTH = 150
 VISUAL_HEIGHT = 90
@@ -107,6 +106,9 @@ def render_all():
             if id == 1:
                 libtcod.console_set_default_foreground(con, color.yellow)
                 libtcod.console_put_char(con, x, y, '#', libtcod.BKGND_NONE)
+            if id == 3:
+                libtcod.console_set_default_foreground(con, color.navy)
+                libtcod.console_put_char(con, x, y, '~', libtcod.BKGND_NONE)
 
 
     # draw all objects in the list
@@ -117,7 +119,6 @@ def render_all():
 
     # blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
-
 
 def handle_keys():
     # key = libtcod.console_check_for_keypress()  #real-time
@@ -161,13 +162,11 @@ objects = [player]
 
 # generate map (at this point it's not drawn to the screen)
 global map
-#map = island_generator.make_map(MAP_SIZE)
-map = voroni.generate_voronoi_diagram(1024)
+map = island_generator.generate_voronoi_diagram(MAP_SIZE,libtcod)
 #biome_generator.make_map(MAP_SIZE)
 
-
-player.x = voroni.get_start_position()[0]
-player.y = voroni.get_start_position()[1]
+player.x = island_generator.get_start_position()[0]
+player.y = island_generator.get_start_position()[1]
 
 make_visual_map()
 
