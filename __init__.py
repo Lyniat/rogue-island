@@ -1,6 +1,6 @@
 import libtcodpy as libtcod
+import thread
 import tiles
-import biome_generator
 import island_generator
 import color
 import math
@@ -21,11 +21,21 @@ FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
 
+game_status = 0
+
 color_dark_wall = libtcod.Color(255, 0, 0)
 color_light_wall = libtcod.Color(130, 110, 50)
 color_dark_ground = libtcod.Color(50, 50, 150)
 color_light_ground = libtcod.Color(200, 180, 50)
 
+
+class Info_text:
+    def __init__(self,value):
+        self.set(value)
+    def get(self):
+        return self.text
+    def set(self,t):
+        self.text = t
 
 
 class Object:
@@ -73,7 +83,7 @@ def make_visual_map():
     global visual
 
     # fill map with "unblocked" tiles
-    visual = [[tiles.Tile(0,False)
+    visual = [[tiles.Tile(0, False)
                for y in range(VISUAL_HEIGHT)]
               for x in range(VISUAL_WIDTH)]
 
@@ -98,10 +108,10 @@ def render_all():
                 libtcod.console_put_char(con, x, y, '~', libtcod.BKGND_NONE)
             if id == 2:
                 # libtcod.console_set_char_background(con, x, y, color_dark_ground, libtcod.BKGND_SET)
-                #if math.sin(x%(y+1)):
+                # if math.sin(x%(y+1)):
                 libtcod.console_set_default_foreground(con, color.green)
-                #else:
-                    #libtcod.console_set_default_foreground(con, color.lime)
+                # else:
+                # libtcod.console_set_default_foreground(con, color.lime)
                 libtcod.console_put_char(con, x, y, ',', libtcod.BKGND_NONE)
             if id == 1:
                 libtcod.console_set_default_foreground(con, color.yellow)
@@ -119,6 +129,7 @@ def render_all():
 
     # blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+
 
 def handle_keys():
     # key = libtcod.console_check_for_keypress()  #real-time
@@ -145,6 +156,11 @@ def handle_keys():
         player.move(1, 0)
 
 
+def update_info(text):
+    middle = SCREEN_WIDTH/2 - len(text)/2
+    libtcod.console_print(0,middle, SCREEN_HEIGHT/2, text)
+
+
 #############################################
 # Initialization & Main Loop
 #############################################
@@ -161,27 +177,33 @@ player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', libtcod.white)
 objects = [player]
 
 # generate map (at this point it's not drawn to the screen)
+info_text = Info_text("                                                                              ")
 global map
-map = island_generator.generate_voronoi_diagram(MAP_SIZE,libtcod)
-#biome_generator.make_map(MAP_SIZE)
+generator_thread = thread.start_new_thread(island_generator.generate_voronoi_diagram, (MAP_SIZE, info_text, map));
+#biome_thread = thread.start_new_thread(island_generator.generate_biomes,(MAP_SIZE,));
+# map = island_generator.generate_voronoi_diagram(MAP_SIZE,libtcod)
+# biome_generator.make_map(MAP_SIZE)
 
-player.x = island_generator.get_start_position()[0]
-player.y = island_generator.get_start_position()[1]
+# player.x = island_generator.get_start_position()[0]
+# player.y = island_generator.get_start_position()[1]
 
-make_visual_map()
-
+# make_visual_map()
 while not libtcod.console_is_window_closed():
 
-    # render the screen
-    render_all()
+    if game_status == 0:
+        update_info(info_text.get())
+        #print generator_thread
 
     libtcod.console_flush()
 
-    # erase all objects at their old locations, before they move
-    for object in objects:
-        object.clear()
+    if game_status == 1:
+        # render the screen
+        render_all()
+        # erase all objects at their old locations, before they move
+        for object in objects:
+            object.clear()
 
-    # handle keys and exit game if needed
-    exit = handle_keys()
-    if exit:
-        break
+        # handle keys and exit game if needed
+        exit = handle_keys()
+        if exit:
+            break

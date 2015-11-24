@@ -2,16 +2,11 @@ import random
 import math
 import Image
 import tiles
-
-
-def update_info(text, libtcod):
-    libtcod.console_print(0, 1, 1, text)
-
-    libtcod.console_flush()
-
+import tmx
 
 # generate voroni diagramm
-def generate_voronoi_diagram(size, libtcod):
+def generate_voronoi_diagram(size, info_text, map):
+
     global start_x, start_y
     start_x = 12
     start_y = 12
@@ -44,6 +39,10 @@ def generate_voronoi_diagram(size, libtcod):
                 nt.append(0)
             else:
                 nt.append(2)
+        elif size / 3.2 > distance > size/4.2:
+            nt.append(4)
+        elif size/4.2 > distance:
+            nt.append(5)
         else:
             nt.append(2)
 
@@ -52,23 +51,20 @@ def generate_voronoi_diagram(size, libtcod):
             dmin = math.hypot(size - 1, size - 1)
             j = -1
             for i in range(num_cells):
-                d = math.hypot(nx[i] - x, ny[i] - y)
+                d = math.fabs(nx[i] - x) + math.fabs(ny[i] - y)#math.hypot(nx[i] - x, ny[i] - y)
                 if d < dmin:
                     dmin = d
                     j = i
             tilemap[x][y] = nt[j]
 
-        update_text = "generating terrain: " + str(((y * 1.0) / size) * 100) + "%"
-
-        print(update_text)
-
-        # update_info("test",libtcod)
+        update_text = "generating terrain: " + str(to_percent((y * 1.0) / size)) + " percent"
+        info_text.set(update_text)
 
     #prevent island from colliding with wall
     for y in range(size):
         for x in range(size):
             dist = math.sqrt((size/2 -x)**2+(size/2 -y)**2)
-            if dist > (size/2 - 6):
+            if dist > (size/2 - 12):
                 tilemap[x][y] = 0
 
 
@@ -83,14 +79,13 @@ def generate_voronoi_diagram(size, libtcod):
                     for ys in range(-3, 3):
                         xt = x + xs
                         yt = y + ys
-                        if tilemap[xt][yt] == 2:
+                        if tilemap[xt][yt] == 2 or tilemap[xt][yt] == 4 or tilemap[xt][yt] == 5:
                             r = random.randrange(5)
                             if r == 0:
                                 tilemap[xt][yt] = 1
 
-        update_text = "adding sand: " + str(((x * 1.0) / (size - 9)) * 100) + "%"
-
-        print(update_text)
+        update_text = "adding sand: " + str(to_percent((x * 1.0) / (size - 9))) + " percent"
+        info_text.set(update_text)
 
     # add sand in water
     for x in range(9, size - 9):
@@ -98,7 +93,7 @@ def generate_voronoi_diagram(size, libtcod):
 
             val = tilemap[x][y]
 
-            if val == 2:
+            if val == 2 or val == 4 or val == 5:
                 for xs in range(-9, 9):
                     for ys in range(-9, 9):
                         xt = x + xs
@@ -107,9 +102,9 @@ def generate_voronoi_diagram(size, libtcod):
                             r = random.randrange(5)
                             if r == 0:
                                 tilemap[xt][yt] = 1
-        update_text = "removing water: " + str(((x * 1.0) / (size - 19)) * 100) + "%"
 
-        print(update_text)
+        update_text = "removing water: " + str(to_percent((x * 1.0) / (size - 19))) + " percent"
+        info_text.set(update_text)
 
     # smooth sand
     for x in range(4, size - 4):
@@ -128,14 +123,23 @@ def generate_voronoi_diagram(size, libtcod):
 
             if counter > 2:
                 tilemap[x][y] = 0
-        update_text = "smoothing sand: " + str(((x * 1.0) / (size - 9)) * 100) + "%"
+        update_text = "smoothing sand: " + str(to_percent((x * 1.0) / (size - 9))) + " percent"
+        info_text.set(update_text)
 
-        print(update_text)
-
-    for i in range(5):
+    # create rivers
+    river_num = size/128;
+    for i in range(river_num):
         x = random.randrange(size / 3, size - size / 3)
         y = random.randrange(size / 3, size - size / 3)
-        # create river
+
+        #create lakes for rivers
+        lake_size = 4
+        for m in range(-lake_size,lake_size):
+            for n in range(-lake_size,lake_size):
+                distance = math.sqrt(m**2+n**2);
+                if distance <= lake_size:
+                    tilemap[x+m][y+n] = 3;
+
         while 1 == 1:
             test_x_pos = 0
             test_y_pos = 0
@@ -143,60 +147,38 @@ def generate_voronoi_diagram(size, libtcod):
             test_x_neg = 0
             test_y_neg = 0
 
-            test_x = 0
-            test_y = 0
-
             while not tilemap[x + test_x_pos][y] == 0:
                 test_x_pos += 1
-            print("xpos: " + str(test_x_pos))
 
             while not tilemap[x][y + test_y_pos] == 0:
                 test_y_pos += 1
-            print("ypos: " + str(test_y_pos))
 
             while not tilemap[x + test_x_neg][y] == 0:
                 test_x_neg -= 1
-            print("xneg: " + str(test_x_neg))
 
             while not tilemap[x][y + test_y_neg] == 0:
                 test_y_neg -= 1
-            print("yneg: " + str(test_y_neg))
-
-            #r = random.randrange(0, 2)
-            #if r == 1:
-                #test_x_neg, test_y_pos = test_y_pos, test_x_neg
-                #test_x_pos, test_y_neg = test_x_neg, test_y_pos
 
             if test_x_pos < math.fabs(test_x_neg):
                 test_x = test_x_pos
-                print("xpos < xneg ==> xpos")
             else:
                 test_x = test_x_neg
-                print("xneg < xpos==> xneg")
 
             if test_y_pos < math.fabs(test_y_neg):
                 test_y = test_y_pos
-                print("ypos < yneg ==> ypos")
             else:
                 test_y = test_y_neg
-                print("yneg < ypos==> yneg")
 
             if math.fabs(test_x) < math.fabs(test_y):
                 x += test_x / math.fabs(test_x)
-                print("x < y ==> x")
             else:
                 y += test_y / math.fabs(test_y)
-                print("y < x ==> y")
 
             x += random.randrange(-1,1)
             y += random.randrange(-1,1)
 
             x = int(x)
             y = int(y)
-
-            print(x)
-            print(y)
-
             if tilemap[x][y]== 0:
                 break
 
@@ -206,17 +188,11 @@ def generate_voronoi_diagram(size, libtcod):
             tilemap[x][y - 1] = 3
             tilemap[x][y] = 3
 
-    for x in range(size):
-        for y in range(size):
+            update_text = "creating river: " + str(to_percent((i+1)/river_num)) + " percent"
+            info_text.set(update_text)
 
-            tile_value = tilemap[x][y]
 
-            new_map[x][y].id = tile_value
-
-            if tile_value == 1:
-                start_x = x
-                start_y = y
-
+    #image for tilemap
     img = Image.new('RGB', (size, size), "white")
     pixels = img.load()  # create the pixel map
 
@@ -227,14 +203,166 @@ def generate_voronoi_diagram(size, libtcod):
             elif tilemap[x][y] == 1:
                 pixels[x, y] = (255, 255, 0)
             elif tilemap[x][y] == 2:
-                pixels[x, y] = (0, 255, 0)
+                r = random.randrange(30);
+                if r == 0:
+                    pixels[x, y] = (0, 0, 0)
+                else:
+                    pixels[x, y] = (0, 255, 0)
             elif tilemap[x][y] == 3:
                 pixels[x, y] = (63, 63, 255)
+            elif tilemap[x][y] == 4:
+                r = random.randrange(16);
+                if r == 0:
+                    pixels[x, y] = (0, 0, 0)
+                else:
+                    pixels[x, y] = (0, 200, 0)
+            elif tilemap[x][y] == 5:
+                r = random.randrange(8);
+                if r == 0:
+                    pixels[x, y] = (0, 0, 0)
+                else:
+                    pixels[x, y] = (0, 127, 0)
+
 
     img.save('tile_map.png')
 
-    return new_map
+    update_text = "terrain generation finished"
+    info_text.set(update_text)
 
+    map = new_map
+
+    update_text = "generating biomes"
+    info_text.set(update_text)
+#def generate_biomes(size):
+    biomemap = [[0
+                for y in range(size)]
+               for x in range(size)]
+
+    nx = []
+    ny = []
+    nt = []
+    biome_id = 0
+    for i in range(size/12):
+        rx = random.randrange(size/2)
+        ry = random.randrange(size/2)
+
+        nx.append(rx)
+        ny.append(ry)
+
+        nt.append(biome_id)
+
+        biome_id += 1
+
+        if biome_id > 4:
+            biome_id = -1
+
+    for y in range(size/2):
+        for x in range(size/2):
+            dmin = math.hypot(size - 1, size - 1)
+            j = -1
+            for i in range(size/12):
+                d = math.hypot(nx[i] - x, ny[i] - y)
+                if d < dmin:
+                    dmin = d
+                    j = i
+            biomemap[x][y] = nt[j]
+
+    #image for biomemap
+    img = Image.new('RGB', (size/2, size/2), "white")
+    pixels = img.load()  # create the pixel map
+
+    for x in range(size/2):  # for every pixel:
+        for y in range(size/2):
+            if biomemap[x][y] <= 0: #normal
+               pixels[x, y]=(255,255,255)
+            if biomemap[x][y] == 1: #village
+                pixels[x, y]=(255,255,0)
+            if biomemap[x][y] == 2: #mushroom
+                pixels[x, y]=(255,0,255)
+            if biomemap[x][y] == 3: #unholy
+                pixels[x, y]=(128,0,255)
+            if biomemap[x][y] == 4: #burned
+                pixels[x, y]=(255,0,0)
+
+
+    img.save('biome_map.png')
+
+
+     #image for complete map
+    img = Image.new('RGB', (size, size), "white")
+    pixels = img.load()  # create the pixel map
+
+    for x in range(size):  # for every pixel:
+        for y in range(size):
+            if biomemap[x/2][y/2] <= 3:
+                if tilemap[x][y] == 0:
+                    pixels[x, y] = (0, 0, 255)
+                elif tilemap[x][y] == 1:
+                    pixels[x, y] = (255, 255, 0)
+                elif tilemap[x][y] == 2:
+                    r = random.randrange(30);
+                    if r == 0:
+                        pixels[x, y] = (0, 0, 0)
+                    else:
+                        pixels[x, y] = (0, 255, 0)
+                elif tilemap[x][y] == 3:
+                    pixels[x, y] = (63, 63, 255)
+                elif tilemap[x][y] == 4:
+                    r = random.randrange(16);
+                    if r == 0:
+                        pixels[x, y] = (0, 0, 0)
+                    else:
+                        pixels[x, y] = (0, 200, 0)
+                elif tilemap[x][y] == 5:
+                    r = random.randrange(8);
+                    if r == 0:
+                        pixels[x, y] = (0, 0, 0)
+                    else:
+                        pixels[x, y] = (0, 127, 0)
+
+            if biomemap[x/2][y/2] == 3:
+                if tilemap[x][y] == 0:
+                    pixels[x, y] = (0, 0, 255)
+                elif tilemap[x][y] == 1:
+                    pixels[x, y] = (255, 255, 0)
+                elif tilemap[x][y] == 2 or tilemap[x][y] == 4 or tilemap[x][y] == 5:
+                    r = random.randrange(30);
+                    if r == 0:
+                        pixels[x, y] = (0, 0, 0)
+                    else:
+                        pixels[x, y] = (127, 0, 255)
+                elif tilemap[x][y] == 3:
+                    pixels[x, y] = (63, 63, 255)
+
+
+            if biomemap[x/2][y/2] == 4:
+                if tilemap[x][y] == 0:
+                    pixels[x, y] = (0, 0, 255)
+                elif tilemap[x][y] == 1:
+                    pixels[x, y] = (255, 255, 0)
+                elif tilemap[x][y] == 2 or tilemap[x][y] == 4 or tilemap[x][y] == 5:
+                    r = random.randrange(30);
+                    if r == 0:
+                        pixels[x, y] = (0, 0, 0)
+                    else:
+                        pixels[x, y] = (127, 0, 0)
+                elif tilemap[x][y] == 3:
+                    pixels[x, y] = (63, 63, 255)
+
+    img.save('complete_map.png')
+
+    update_text = "complete generation finished"
+    info_text.set(update_text)
 
 def get_start_position():
     return [start_x, start_y]
+
+def to_percent(value):
+    value *= 100
+    if value > 100:
+        value = 100
+    value = int(value)
+    return value
+
+
+
