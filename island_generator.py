@@ -10,6 +10,7 @@ def generate_voronoi_diagram(size, info_text, map):
     global start_x, start_y
     start_x = 12
     start_y = 12
+
     global new_map
     new_map = [[tiles.Tile(0, False)
                 for y in range(size)]
@@ -51,7 +52,7 @@ def generate_voronoi_diagram(size, info_text, map):
             dmin = math.hypot(size - 1, size - 1)
             j = -1
             for i in range(num_cells):
-                d = math.fabs(nx[i] - x) + math.fabs(ny[i] - y)#math.hypot(nx[i] - x, ny[i] - y)
+                d = math.fabs(nx[i] - x) + math.fabs(ny[i] - y)#math.fabs(nx[i] - x) + math.fabs(ny[i] - y)#math.hypot(nx[i] - x, ny[i] - y)
                 if d < dmin:
                     dmin = d
                     j = i
@@ -233,6 +234,7 @@ def generate_voronoi_diagram(size, info_text, map):
 
     update_text = "generating biomes"
     info_text.set(update_text)
+
 #def generate_biomes(size):
     biomemap = [[0
                 for y in range(size)]
@@ -261,7 +263,7 @@ def generate_voronoi_diagram(size, info_text, map):
             dmin = math.hypot(size - 1, size - 1)
             j = -1
             for i in range(size/12):
-                d = math.hypot(nx[i] - x, ny[i] - y)
+                d = math.sin(math.hypot(nx[i] - x, ny[i] - y))+math.fabs(nx[i] - x) + math.fabs(ny[i] - y)
                 if d < dmin:
                     dmin = d
                     j = i
@@ -286,7 +288,6 @@ def generate_voronoi_diagram(size, info_text, map):
 
 
     img.save('biome_map.png')
-
 
      #image for complete map
     img = Image.new('RGB', (size, size), "white")
