@@ -2,7 +2,7 @@ import random
 import math
 import Image
 import tiles
-import tmx
+import csv
 
 # generate voroni diagramm
 def generate_voronoi_diagram(size, info_text, map):
@@ -199,29 +199,15 @@ def generate_voronoi_diagram(size, info_text, map):
 
     for x in range(size):  # for every pixel:
         for y in range(size):
-            if tilemap[x][y] == 0:
-                pixels[x, y] = (0, 0, 255)
-            elif tilemap[x][y] == 1:
+            if tilemap[x][y] == 1:
                 pixels[x, y] = (255, 255, 0)
             elif tilemap[x][y] == 2:
-                r = random.randrange(30);
-                if r == 0:
-                    pixels[x, y] = (0, 0, 0)
-                else:
                     pixels[x, y] = (0, 255, 0)
             elif tilemap[x][y] == 3:
                 pixels[x, y] = (63, 63, 255)
             elif tilemap[x][y] == 4:
-                r = random.randrange(16);
-                if r == 0:
-                    pixels[x, y] = (0, 0, 0)
-                else:
                     pixels[x, y] = (0, 200, 0)
             elif tilemap[x][y] == 5:
-                r = random.randrange(8);
-                if r == 0:
-                    pixels[x, y] = (0, 0, 0)
-                else:
                     pixels[x, y] = (0, 127, 0)
 
 
@@ -256,18 +242,75 @@ def generate_voronoi_diagram(size, info_text, map):
         biome_id += 1
 
         if biome_id > 4:
-            biome_id = -1
+            biome_id = 0
 
     for y in range(size/2):
         for x in range(size/2):
             dmin = math.hypot(size - 1, size - 1)
             j = -1
             for i in range(size/12):
-                d = math.sin(math.hypot(nx[i] - x, ny[i] - y))+math.fabs(nx[i] - x) + math.fabs(ny[i] - y)
+                d = math.hypot(nx[i] - x, ny[i] - y)+math.fabs(nx[i] - x) + math.fabs(ny[i] - y)
                 if d < dmin:
                     dmin = d
                     j = i
             biomemap[x][y] = nt[j]
+
+    #combine technical and special biomes
+    with open("data/index/biomes.csv", 'rb') as f:
+        mycsv = csv.reader(f, delimiter=';')
+        mycsv = list(mycsv)
+        for x in range(size):
+            for y in range(size):
+                tech_value = tilemap[x][y]
+                special_value = biomemap[x/2][y/2]
+                text = mycsv[tech_value + 1][special_value + 1]
+                new_value = text.split(",")
+
+                tilemap[x][y] = int(new_value[0])
+
+    #buildings
+    file = open("data/structures/house_00.txt","r")
+    for x in range(size):
+        for y in range(size):
+            tech_value = tilemap[x][y]
+            special_value = biomemap[x/2][y/2]
+            if tech_value == 2 and special_value == 1:
+                r = random.randrange(20)
+                if r == 0:
+                    line = 0
+                    row = 0
+                    while 1:
+                        char = file.read(1)
+                        if not char: break
+                        if char == "#":
+                            tilemap[x+line][y+row] = 7
+                        if char == "|":
+                            tilemap[x+line][y+row] = 8
+                        row +=1
+                        if char == "\n":
+                            row = 0
+                            line += 1
+    file.close()
+
+
+    #generate objects
+    #trees
+    for x in range(size):
+        for y in range(size):
+            value = tilemap[x][y]
+            if value == 2:
+                r = random.randrange(40)
+                if r == 0:
+                    tilemap[x][y] = 6
+            if value == 4:
+                r = random.randrange(20)
+                if r == 0:
+                    tilemap[x][y] = 6
+            if value == 5:
+                r = random.randrange(10)
+                if r == 0:
+                    tilemap[x][y] = 6
+
 
     #image for biomemap
     img = Image.new('RGB', (size/2, size/2), "white")
@@ -289,66 +332,21 @@ def generate_voronoi_diagram(size, info_text, map):
 
     img.save('biome_map.png')
 
-     #image for complete map
+    #image for complete map
     img = Image.new('RGB', (size, size), "white")
     pixels = img.load()  # create the pixel map
 
-    for x in range(size):  # for every pixel:
-        for y in range(size):
-            if biomemap[x/2][y/2] <= 3:
-                if tilemap[x][y] == 0:
-                    pixels[x, y] = (0, 0, 255)
-                elif tilemap[x][y] == 1:
-                    pixels[x, y] = (255, 255, 0)
-                elif tilemap[x][y] == 2:
-                    r = random.randrange(30);
-                    if r == 0:
-                        pixels[x, y] = (0, 0, 0)
-                    else:
-                        pixels[x, y] = (0, 255, 0)
-                elif tilemap[x][y] == 3:
-                    pixels[x, y] = (63, 63, 255)
-                elif tilemap[x][y] == 4:
-                    r = random.randrange(16);
-                    if r == 0:
-                        pixels[x, y] = (0, 0, 0)
-                    else:
-                        pixels[x, y] = (0, 200, 0)
-                elif tilemap[x][y] == 5:
-                    r = random.randrange(8);
-                    if r == 0:
-                        pixels[x, y] = (0, 0, 0)
-                    else:
-                        pixels[x, y] = (0, 127, 0)
+    with open("data/index/tiles.csv", 'rb') as f:
+        mycsv = csv.reader(f, delimiter=';')
+        mycsv = list(mycsv)
+        for x in range(size):
+            for y in range(size):
+                value = tilemap[x][y]
+                red = int(mycsv[value+1][3])
+                green = int(mycsv[value+1][4])
+                blue = int(mycsv[value+1][5])
 
-            if biomemap[x/2][y/2] == 3:
-                if tilemap[x][y] == 0:
-                    pixels[x, y] = (0, 0, 255)
-                elif tilemap[x][y] == 1:
-                    pixels[x, y] = (255, 255, 0)
-                elif tilemap[x][y] == 2 or tilemap[x][y] == 4 or tilemap[x][y] == 5:
-                    r = random.randrange(30);
-                    if r == 0:
-                        pixels[x, y] = (0, 0, 0)
-                    else:
-                        pixels[x, y] = (127, 0, 255)
-                elif tilemap[x][y] == 3:
-                    pixels[x, y] = (63, 63, 255)
-
-
-            if biomemap[x/2][y/2] == 4:
-                if tilemap[x][y] == 0:
-                    pixels[x, y] = (0, 0, 255)
-                elif tilemap[x][y] == 1:
-                    pixels[x, y] = (255, 255, 0)
-                elif tilemap[x][y] == 2 or tilemap[x][y] == 4 or tilemap[x][y] == 5:
-                    r = random.randrange(30);
-                    if r == 0:
-                        pixels[x, y] = (0, 0, 0)
-                    else:
-                        pixels[x, y] = (127, 0, 0)
-                elif tilemap[x][y] == 3:
-                    pixels[x, y] = (63, 63, 255)
+                pixels[x,y] =(red,green,blue)
 
     img.save('complete_map.png')
 

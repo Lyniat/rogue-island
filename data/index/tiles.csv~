@@ -1,0 +1,10 @@
+ID;NAME;CHAR;R;G;B
+0;water(sea);~;0;0;127
+1;sand;;255;255;0
+2;grass(small);";";0;255;0
+3;water(river);~;0;0;255
+4;grass(medium);;0;200;0
+5;grass(tall);;0;127;0
+6;tree;;100;50;0
+7;wall;;0;0;0
+8;door;;15;15;15
