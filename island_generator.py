@@ -269,14 +269,26 @@ def generate_voronoi_diagram(size, info_text, map):
                 tilemap[x][y] = int(new_value[0])
 
     #buildings
-    file = open("data/structures/house_00.txt","r")
-    for x in range(size):
-        for y in range(size):
+    for x in range(8,size-8):
+        for y in range(8,size-8):
             tech_value = tilemap[x][y]
             special_value = biomemap[x/2][y/2]
-            if tech_value == 2 and special_value == 1:
-                r = random.randrange(20)
+            if (tech_value == 2 or tech_value == 4 or tech_value == 5) and special_value == 1:
+                r = random.randrange(240)
                 if r == 0:
+
+                    #check if space to build
+                    free = 1
+                    for m in range(-1,15):
+                        for n in range(-1,15):
+                            if tilemap[x+m][y+n] != 2 and tilemap[x+m][y+n] != 4 and tilemap[x+m][y+n] != 5 and tilemap[x+m][y+n] != 6:
+                                free = 0
+
+                    if free == 0:
+                        continue
+
+                    r = random.randrange(4)
+                    file = open("data/structures/house_"+str(r)+".txt","r")
                     line = 0
                     row = 0
                     while 1:
@@ -286,11 +298,13 @@ def generate_voronoi_diagram(size, info_text, map):
                             tilemap[x+line][y+row] = 7
                         if char == "|":
                             tilemap[x+line][y+row] = 8
+                        if char == ".":
+                            tilemap[x+line][y+row] = 9
                         row +=1
                         if char == "\n":
                             row = 0
                             line += 1
-    file.close()
+                    file.close()
 
 
     #generate objects
@@ -299,17 +313,22 @@ def generate_voronoi_diagram(size, info_text, map):
         for y in range(size):
             value = tilemap[x][y]
             if value == 2:
-                r = random.randrange(40)
-                if r == 0:
-                    tilemap[x][y] = 6
-            if value == 4:
                 r = random.randrange(20)
                 if r == 0:
                     tilemap[x][y] = 6
-            if value == 5:
+            if value == 4:
                 r = random.randrange(10)
                 if r == 0:
                     tilemap[x][y] = 6
+            if value == 5:
+                r = random.randrange(5)
+                if r == 0:
+                    tilemap[x][y] = 6
+            #fungi
+            if value == 10:
+                r = random.randrange(10)
+                if r == 0:
+                    tilemap[x][y] = 11
 
 
     #image for biomemap
@@ -319,7 +338,7 @@ def generate_voronoi_diagram(size, info_text, map):
     for x in range(size/2):  # for every pixel:
         for y in range(size/2):
             if biomemap[x][y] <= 0: #normal
-               pixels[x, y]=(255,255,255)
+                pixels[x, y]=(255,255,255)
             if biomemap[x][y] == 1: #village
                 pixels[x, y]=(255,255,0)
             if biomemap[x][y] == 2: #mushroom
