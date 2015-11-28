@@ -11,3 +11,4 @@ ID;NAME;CHAR;R;G;B
 9;floor;;255;255;255
 10;mycelium;;200;150;200
 11;fungus;;200;100;100
+12;grass(swamp);;75;200;0
