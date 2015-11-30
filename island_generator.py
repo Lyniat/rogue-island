@@ -3,9 +3,20 @@ import math
 import Image
 import tiles
 import csv
+import ConfigParser
 
 # generate voroni diagramm
 def generate_voronoi_diagram(size, info_text, map):
+
+    #read cfg
+    config = ConfigParser.ConfigParser()
+    config.read('data/index/generator.cfg')
+    CELL_DIVISION = int(config.get("GenericAttributes","CellDivision"))
+    BORDER_WATER = float(config.get("GenericAttributes","BorderWater"))
+    BORDER_GRASS = float(config.get("GenericAttributes","BorderGrass"))
+    BORDER_JUNGLE = float(config.get("GenericAttributes","BorderJungle"))
+
+
 
     global start_x, start_y
     start_x = 12
@@ -19,7 +30,7 @@ def generate_voronoi_diagram(size, info_text, map):
                 for y in range(size)]
                for x in range(size)]
 
-    num_cells = size / 3
+    num_cells = size / CELL_DIVISION
     nx = []
     ny = []
     nt = []
@@ -34,15 +45,15 @@ def generate_voronoi_diagram(size, info_text, map):
             nt.append(0)
 
 
-        elif size / 2.5 > distance > size / 3.2:
+        elif size / BORDER_WATER > distance > size / BORDER_GRASS:
             r = random.randrange(4)
             if r == 0:
                 nt.append(0)
             else:
                 nt.append(2)
-        elif size / 3.2 > distance > size/4.2:
+        elif size / BORDER_GRASS > distance > size/BORDER_JUNGLE:
             nt.append(4)
-        elif size/4.2 > distance:
+        elif size/BORDER_JUNGLE > distance:
             nt.append(5)
         else:
             nt.append(2)
