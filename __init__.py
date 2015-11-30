@@ -3,14 +3,13 @@ import thread
 import tiles
 import island_generator
 import color
-import math
 
 # actual size of the window
 SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 100
 
 # size of the map
-MAP_SIZE = 32
+MAP_SIZE = 512
 
 VISUAL_WIDTH = 150
 VISUAL_HEIGHT = 90

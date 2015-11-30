@@ -289,7 +289,7 @@ def generate_voronoi_diagram(size, info_text, map):
                     if free == 0:
                         continue
 
-                    r = random.randrange(4)
+                    r = random.randrange(8)
                     file = open("data/structures/house_"+str(r)+".txt","r")
 
                     #build direction
@@ -304,7 +304,6 @@ def generate_voronoi_diagram(size, info_text, map):
                     else:
                         line = max_value
                         line_increaser = -1
-
 
                     if r_row == 0:
                         row_reset = 0
@@ -323,6 +322,8 @@ def generate_voronoi_diagram(size, info_text, map):
                             tilemap[x+row][y+line] = 8
                         if char == ".":
                             tilemap[x+row][y+line] = 9
+                        if char == "~":
+                            tilemap[x+row][y+line] = 3
                         row += row_increaser
                         if char == "\n":
                             row = row_reset
@@ -344,7 +345,9 @@ def generate_voronoi_diagram(size, info_text, map):
                         for n in range(-lake_size,lake_size):
                             distance = math.sqrt(m**2+n**2)
                             if distance <= lake_size:
-                                tilemap[x+m][y+n] = 3
+                                r = random.randrange(6)
+                                if not r== 0:
+                                    tilemap[x+m][y+n] = 3
 
     #generate objects
     #trees
@@ -369,6 +372,12 @@ def generate_voronoi_diagram(size, info_text, map):
                 if r == 0:
                     tilemap[x][y] = 11
 
+            #beach/desert
+            if value == 1:
+                r = random.randrange(30)
+                if r == 0:
+                    tilemap[x][y] = 13
+
     #image for biomemap
     img = Image.new('RGB', (size/2, size/2), "white")
     pixels = img.load()  # create the pixel map
@@ -383,7 +392,7 @@ def generate_voronoi_diagram(size, info_text, map):
                 pixels[x, y]=(255,0,255)
             if biomemap[x][y] == 3: #swamp
                 pixels[x, y]=(128,255,0)
-            if biomemap[x][y] == 4: #burned
+            if biomemap[x][y] == 4: #desert
                 pixels[x, y]=(255,0,0)
 
 
