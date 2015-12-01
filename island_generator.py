@@ -9,13 +9,19 @@ import ConfigParser
 def generate_voronoi_diagram(size, info_text, map):
 
     #read cfg
+    #generic attributes
     config = ConfigParser.ConfigParser()
-    config.read('data/index/generator.cfg')
+    config.read('data/configurations/generator.cfg')
     CELL_DIVISION = int(config.get("GenericAttributes","CellDivision"))
     BORDER_WATER = float(config.get("GenericAttributes","BorderWater"))
     BORDER_GRASS = float(config.get("GenericAttributes","BorderGrass"))
     BORDER_JUNGLE = float(config.get("GenericAttributes","BorderJungle"))
-
+    BORDER_TO_WALL = int(config.get("GenericAttributes","BorderWall"))
+    SAND_IN_GRASS_RANGE = int(config.get("GenericAttributes","SandInGrassRange"))
+    SAND_IN_WATER_RANGE = int(config.get("GenericAttributes","SandInWaterRange"))
+    RIVER_DIVISION = int(config.get("GenericAttributes","RiverDivision"))
+    RIVER_RANGE = int(config.get("GenericAttributes","RiverRange"))
+    RIVER_LAKE_SIZE = int(config.get("GenericAttributes","RiverLakeSize"))
 
 
     global start_x, start_y
@@ -76,19 +82,19 @@ def generate_voronoi_diagram(size, info_text, map):
     for y in range(size):
         for x in range(size):
             dist = math.sqrt((size/2 -x)**2+(size/2 -y)**2)
-            if dist > (size/2 - 12):
+            if dist > (size/2 - BORDER_TO_WALL):
                 tilemap[x][y] = 0
 
 
     # add sand in grass
-    for x in range(4, size - 4):
-        for y in range(4, size - 4):
+    for x in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1):
+        for y in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1):
 
             val = tilemap[x][y]
 
             if val == 0:
-                for xs in range(-3, 3):
-                    for ys in range(-3, 3):
+                for xs in range(-SAND_IN_GRASS_RANGE, SAND_IN_GRASS_RANGE):
+                    for ys in range(-SAND_IN_GRASS_RANGE, SAND_IN_GRASS_RANGE):
                         xt = x + xs
                         yt = y + ys
                         if tilemap[xt][yt] == 2 or tilemap[xt][yt] == 4 or tilemap[xt][yt] == 5:
@@ -100,14 +106,14 @@ def generate_voronoi_diagram(size, info_text, map):
         info_text.set(update_text)
 
     # add sand in water
-    for x in range(9, size - 9):
-        for y in range(9, size - 9):
+    for x in range(SAND_IN_WATER_RANGE, size - SAND_IN_WATER_RANGE):
+        for y in range(SAND_IN_WATER_RANGE, size - SAND_IN_WATER_RANGE):
 
             val = tilemap[x][y]
 
             if val == 2 or val == 4 or val == 5:
-                for xs in range(-9, 9):
-                    for ys in range(-9, 9):
+                for xs in range(-SAND_IN_WATER_RANGE, SAND_IN_WATER_RANGE):
+                    for ys in range(-SAND_IN_WATER_RANGE, SAND_IN_WATER_RANGE):
                         xt = x + xs
                         yt = y + ys
                         if tilemap[xt][yt] == 0:
@@ -139,17 +145,16 @@ def generate_voronoi_diagram(size, info_text, map):
         info_text.set(update_text)
 
     # create rivers
-    river_num = size/128;
+    river_num = size/RIVER_DIVISION;
     for i in range(river_num):
-        x = random.randrange(size / 3, size - size / 3)
-        y = random.randrange(size / 3, size - size / 3)
+        x = random.randrange(size / RIVER_RANGE, size - size / RIVER_RANGE)
+        y = random.randrange(size / RIVER_RANGE, size - size / RIVER_RANGE)
 
         #create lakes for rivers
-        lake_size = 4
-        for m in range(-lake_size,lake_size):
-            for n in range(-lake_size,lake_size):
+        for m in range(-RIVER_LAKE_SIZE,RIVER_LAKE_SIZE):
+            for n in range(-RIVER_LAKE_SIZE,RIVER_LAKE_SIZE):
                 distance = math.sqrt(m**2+n**2);
-                if distance <= lake_size:
+                if distance <= RIVER_LAKE_SIZE:
                     tilemap[x+m][y+n] = 3;
 
         while 1 == 1:
@@ -252,7 +257,7 @@ def generate_voronoi_diagram(size, info_text, map):
 
         biome_id += 1
 
-        if biome_id > 4:
+        if biome_id > 5:
             biome_id = 0
 
     for y in range(size/2):
@@ -267,7 +272,7 @@ def generate_voronoi_diagram(size, info_text, map):
             biomemap[x][y] = nt[j]
 
     #combine technical and special biomes
-    with open("data/index/biomes.csv", 'rb') as f:
+    with open("data/configurations/biomes.csv", 'rb') as f:
         mycsv = csv.reader(f, delimiter=';')
         mycsv = list(mycsv)
         for x in range(size):
@@ -380,7 +385,7 @@ def generate_voronoi_diagram(size, info_text, map):
             #fungi
             if value == 10:
                 r = random.randrange(10)
-                if r == 0:
+                if r <= 4:
                     tilemap[x][y] = 11
 
             #beach/desert
@@ -388,6 +393,58 @@ def generate_voronoi_diagram(size, info_text, map):
                 r = random.randrange(30)
                 if r == 0:
                     tilemap[x][y] = 13
+
+    #cellular for mushroom
+    for i in range(1):
+        for x in range(1,size-1):
+            for y in range(1,size-1):
+                value = tilemap[x][y]
+                trees_around = 0
+                #if mushroom
+                if value == 11:
+                    if tilemap[x+1][y] == 11:
+                        trees_around += 1
+                    if tilemap[x-1][y] == 11:
+                        trees_around += 1
+                    if tilemap[x][y+1] == 11:
+                        trees_around += 1
+                    if tilemap[x][y-1] == 11:
+                        trees_around += 1
+
+                    if tilemap[x+1][y+1] == 11:
+                        trees_around += 1
+                    if tilemap[x+1][y-1] == 11:
+                        trees_around += 1
+                    if tilemap[x-1][y+1] == 11:
+                        trees_around += 1
+                    if tilemap[x-1][y-1] == 11:
+                        trees_around += 1
+
+                    if trees_around < 4:
+                        tilemap[x][y] = 10
+
+                #if no mushroom
+                if value == 10:
+                    if tilemap[x+1][y] == 11:
+                        trees_around += 1
+                    if tilemap[x-1][y] == 11:
+                        trees_around += 1
+                    if tilemap[x][y+1] == 11:
+                        trees_around += 1
+                    if tilemap[x][y-1] == 11:
+                        trees_around += 1
+
+                    if tilemap[x+1][y+1] == 11:
+                        trees_around += 1
+                    if tilemap[x+1][y-1] == 11:
+                        trees_around += 1
+                    if tilemap[x-1][y+1] == 11:
+                        trees_around += 1
+                    if tilemap[x-1][y-1] == 11:
+                        trees_around += 1
+
+                    if trees_around >= 5:
+                        tilemap[x][y] = 11
 
     #image for biomemap
     img = Image.new('RGB', (size/2, size/2), "white")
@@ -405,6 +462,8 @@ def generate_voronoi_diagram(size, info_text, map):
                 pixels[x, y]=(128,255,0)
             if biomemap[x][y] == 4: #desert
                 pixels[x, y]=(255,0,0)
+            if biomemap[x][y] == 5: #burned
+                pixels[x, y]=(0,0,0)
 
 
     img.save('biome_map.png')
@@ -413,7 +472,7 @@ def generate_voronoi_diagram(size, info_text, map):
     img = Image.new('RGB', (size, size), "white")
     pixels = img.load()  # create the pixel map
 
-    with open("data/index/tiles.csv", 'rb') as f:
+    with open("data/configurations/tiles.csv", 'rb') as f:
         mycsv = csv.reader(f, delimiter=';')
         mycsv = list(mycsv)
         for x in range(size):
