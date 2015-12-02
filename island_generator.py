@@ -22,6 +22,16 @@ def generate_voronoi_diagram(size, info_text, map):
     RIVER_DIVISION = int(config.get("GenericAttributes","RiverDivision"))
     RIVER_RANGE = int(config.get("GenericAttributes","RiverRange"))
     RIVER_LAKE_SIZE = int(config.get("GenericAttributes","RiverLakeSize"))
+    BUILDING_PROBABILITY = int(config.get("BiomeAttributes","BuildingProbability"))
+    POND_PROBABILITY = int(config.get("BiomeAttributes","PondProbability"))
+    POND_MIN_SIZE = int(config.get("BiomeAttributes","PondMinSize"))
+    POND_MAX_SIZE = int(config.get("BiomeAttributes","PondMaxSize"))
+    TREE_PROBABILITY_BEACH = int(config.get("BiomeAttributes","TreeProbabilityBeach"))
+    TREE_PROBABILITY_PLAIN = int(config.get("BiomeAttributes","TreeProbabilityPlain"))
+    TREE_PROBABILITY_FOREST = int(config.get("BiomeAttributes","TreeProbabilityForest"))
+    TREE_PROBABILITY_JUNGLE = int(config.get("BiomeAttributes","TreeProbabilityJungle"))
+    MUSHROOM_PROBABILITY = int(config.get("BiomeAttributes","MushroomProbability"))
+    MUSHROOM_CELLULAR_ITERATIONS = int(config.get("BiomeAttributes","MushroomCellularIterations"))
 
 
     global start_x, start_y
@@ -237,7 +247,7 @@ def generate_voronoi_diagram(size, info_text, map):
     update_text = "generating biomes"
     info_text.set(update_text)
 
-#def generate_biomes(size):
+    #def generate_biomes(size):
     biomemap = [[0
                 for y in range(size)]
                for x in range(size)]
@@ -290,7 +300,7 @@ def generate_voronoi_diagram(size, info_text, map):
             tech_value = tilemap[x][y]
             special_value = biomemap[x/2][y/2]
             if (tech_value == 2 or tech_value == 4 or tech_value == 5) and special_value == 1:
-                r = random.randrange(240)
+                r = random.randrange(BUILDING_PROBABILITY)
                 if r == 0:
 
                     max_value = 14
@@ -355,17 +365,15 @@ def generate_voronoi_diagram(size, info_text, map):
             tech_value = tilemap[x][y]
             special_value = biomemap[x/2][y/2]
             if (tech_value == 12) and special_value == 3:
-                r = random.randrange(100)
+                r = random.randrange(POND_PROBABILITY)
                 if r == 0:
-                    extra_size = random.randrange(0,4)
-
-                    lake_size = 2 + extra_size
+                    lake_size = random.randrange(POND_MIN_SIZE,POND_MAX_SIZE)
                     for m in range(-lake_size,lake_size):
                         for n in range(-lake_size,lake_size):
                             distance = math.sqrt(m**2+n**2)
                             if distance <= lake_size:
                                 r = random.randrange(6)
-                                if not r== 0:
+                                if not r == 0:
                                     tilemap[x+m][y+n] = 3
 
         update_text = "adding ponds: " + str(to_percent((x * 1.0) / (size - 16))) + " percent"
@@ -377,26 +385,26 @@ def generate_voronoi_diagram(size, info_text, map):
         for y in range(size):
             value = tilemap[x][y]
             if value == 2:
-                r = random.randrange(20)
+                r = random.randrange(TREE_PROBABILITY_PLAIN)
                 if r == 0:
                     tilemap[x][y] = 6
             if value == 4 or value == 12:
-                r = random.randrange(10)
+                r = random.randrange(TREE_PROBABILITY_FOREST)
                 if r == 0:
                     tilemap[x][y] = 6
             if value == 5:
-                r = random.randrange(5)
+                r = random.randrange(TREE_PROBABILITY_JUNGLE)
                 if r == 0:
                     tilemap[x][y] = 6
-            #fungi
+            #mushroom
             if value == 10:
-                r = random.randrange(10)
+                r = random.randrange(MUSHROOM_PROBABILITY)
                 if r <= 4:
                     tilemap[x][y] = 11
 
             #beach/desert
             if value == 1:
-                r = random.randrange(30)
+                r = random.randrange(TREE_PROBABILITY_BEACH)
                 if r == 0:
                     tilemap[x][y] = 13
 
@@ -404,7 +412,7 @@ def generate_voronoi_diagram(size, info_text, map):
         info_text.set(update_text)
 
     #cellular for mushroom
-    for i in range(1):
+    for i in range(MUSHROOM_CELLULAR_ITERATIONS):
         for x in range(1,size-1):
             for y in range(1,size-1):
                 value = tilemap[x][y]
@@ -553,6 +561,11 @@ def generate_voronoi_diagram(size, info_text, map):
     update_text = "complete generation finished"
     info_text.set(update_text)
 
+    write_map_file(size,tilemap)
+
+    update_text = "saving world finished"
+    info_text.set(update_text)
+
 def get_start_position():
     return [start_x, start_y]
 
@@ -562,6 +575,15 @@ def to_percent(value):
         value = 100
     value = int(value)
     return value
+
+def write_map_file(size,map):
+    with open("save.txt", "a") as savefile:
+        for x in range(size):
+            for y in range(size):
+                savefile.write(str(map[x][y]) + ",")
+            savefile.write("\n")
+
+
 
 
 
