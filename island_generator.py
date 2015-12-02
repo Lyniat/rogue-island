@@ -346,6 +346,9 @@ def generate_voronoi_diagram(size, info_text, map):
                             line += line_increaser
                     file.close()
 
+        update_text = "adding buildings: " + str(to_percent((x * 1.0) / (size - 28))) + " percent"
+        info_text.set(update_text)
+
     #swamp lakes
     for x in range(8,size-8):
         for y in range(8,size-8):
@@ -354,7 +357,7 @@ def generate_voronoi_diagram(size, info_text, map):
             if (tech_value == 12) and special_value == 3:
                 r = random.randrange(100)
                 if r == 0:
-                    extra_size = random.randrange(0,2)
+                    extra_size = random.randrange(0,4)
 
                     lake_size = 2 + extra_size
                     for m in range(-lake_size,lake_size):
@@ -364,6 +367,9 @@ def generate_voronoi_diagram(size, info_text, map):
                                 r = random.randrange(6)
                                 if not r== 0:
                                     tilemap[x+m][y+n] = 3
+
+        update_text = "adding ponds: " + str(to_percent((x * 1.0) / (size - 16))) + " percent"
+        info_text.set(update_text)
 
     #generate objects
     #trees
@@ -393,6 +399,9 @@ def generate_voronoi_diagram(size, info_text, map):
                 r = random.randrange(30)
                 if r == 0:
                     tilemap[x][y] = 13
+
+        update_text = "adding trees: " + str(to_percent((x * 1.0) / size)) + " percent"
+        info_text.set(update_text)
 
     #cellular for mushroom
     for i in range(1):
@@ -445,6 +454,61 @@ def generate_voronoi_diagram(size, info_text, map):
 
                     if trees_around >= 5:
                         tilemap[x][y] = 11
+
+            update_text = "coalescing mushrooms: " + str(to_percent((x * 1.0) / (size - 2))) + " percent"
+            info_text.set(update_text)
+
+    #castle for burned biome
+    for x in range(1,size-1,8):
+            for y in range(1,size-1,8):
+                value = tilemap[x][y]
+                #if burned ground
+                if value == 14:
+                   #check if space to build
+                    free = 1
+                    for m in range(8):
+                        for n in range(8):
+                            if tilemap == 13:
+                                free = 0
+
+                    if free == 0:
+                        continue
+
+                    r = random.randrange(7)
+                    file = open("data/structures/castle_"+str(r)+".txt","r")
+
+                    line = 0
+                    row = 0
+
+                    while 1:
+                        char = file.read(1)
+                        if not char: break
+                        if not tilemap[x+row][y+line] == 3:
+                            if char == "#":
+                                tilemap[x+row][y+line] = 7
+                            if char == "|":
+                                tilemap[x+row][y+line] = 8
+                            if char == ".":
+                                tilemap[x+row][y+line] = 9
+                            if char == "~":
+                                tilemap[x+row][y+line] = 3
+                            if char == "%":
+                                tilemap[x+row][y+line] = 15
+                        row += 1
+                        if char == "\n":
+                            row = 0
+                            line += 1
+                    file.close()
+
+            update_text = "building up strongholds: " + str(to_percent((x * 1.0) / (size - 2))) + " percent"
+            info_text.set(update_text)
+
+    #remove invisible walls
+    for x in range(1,size-1,8):
+            for y in range(1,size-1,8):
+                value = tilemap[x][y]
+                #if value == 15:
+
 
     #image for biomemap
     img = Image.new('RGB', (size/2, size/2), "white")
