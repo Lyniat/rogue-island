@@ -264,7 +264,7 @@ def generate_voronoi_diagram(size, info_text, map):
 
         biome_id += 1
 
-        if biome_id > 5:
+        if biome_id > 7:
             biome_id = 0
 
     for y in range(size / 2):
@@ -511,6 +511,57 @@ def generate_voronoi_diagram(size, info_text, map):
         update_text = "building up strongholds: " + str(to_percent((x * 1.0) / (size - 2))) + " percent"
         info_text.set(update_text)
 
+    # honeycombs for bees
+    for x in range(1, size - 26, 25):
+        for y in range(1, size - 26, 10):
+            value = tilemap[x][y]
+            # if honey ground
+            if 1:#value == 16 or value == 17:
+
+                file = open("data/structures/hexagon.txt", "r")
+
+                line = 0
+                row = 0
+
+                while 1:
+                    char = file.read(1)
+                    if not char: break
+                    if tilemap[x + row][y + line] == 16:
+                        if char == "#":
+                            tilemap[x + row][y + line] = 17
+                    row += 1
+                    if char == "\n":
+                        row = 0
+                        line += 1
+                file.close()
+
+    # honeycombs for bees
+    for x in range(13, size - 26, 25):
+        for y in range(6, size - 26, 10):
+            value = tilemap[x][y]
+            # if honey ground
+            if 1:#value == 16:
+
+                file = open("data/structures/hexagon.txt", "r")
+
+                line = 0
+                row = 0
+
+                while 1:
+                    char = file.read(1)
+                    if not char: break
+                    if tilemap[x + row][y + line] == 16:
+                        if char == "#":
+                            tilemap[x + row][y + line] = 17
+                    row += 1
+                    if char == "\n":
+                        row = 0
+                        line += 1
+                file.close()
+
+        update_text = "creating honeycombs: " + str(to_percent((x * 1.0) / (size - 2))) + " percent"
+        info_text.set(update_text)
+
     # remove invisible walls
     wall_counter = 0
     for x in range(1, size - 1):
@@ -550,6 +601,10 @@ def generate_voronoi_diagram(size, info_text, map):
                 pixels[x, y] = (255, 0, 0)
             if biomemap[x][y] == 5:  # burned
                 pixels[x, y] = (0, 0, 0)
+            if biomemap[x][y] == 6:  # killer bees
+                pixels[x, y] = (255, 100, 0)
+            if biomemap[x][y] == 7:  # frozen
+                pixels[x, y] = (120, 160, 210)
 
     img.save('biome_map.png')
 

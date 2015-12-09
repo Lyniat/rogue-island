@@ -1,7 +1,7 @@
-basic/technic;0, Normal;1, Village;2, Mushroom;3, Swamp;4, Desert;5, Burned
-0, Water;0, Water;0, Water;0, Water;0, Water;0, Water;0, Water
-1, Beach;1, Sand;1, Sand;1, Sand;12,Grass(swamp);1, Sand;1, Sand
-2, Plain;2, Grass;2, Grass;2, Grass;12,Grass(swamp);1, Sand;2, Grass
-3, Water(river);3, Water;3, Water;3, Water;3, Water;3, Water;3, Water
-4, Forest;4, Grass;4, Grass;10, Mycelium;12,Grass(swamp);4, Grass;4, Grass
-5, Jungle;5, Grass;5, Grass;10, Mycelium;12,Grass(swamp);5, Grass;14,Burned
+basic/technic;0, Normal;1, Village;2, Mushroom;3, Swamp;4, Desert;5, Burned;6, Killer bees;7, Frozen
+0, Water;0, Water;0, Water;0, Water;0, Water;0, Water;0, Water;0, Water;18, ice
+1, Beach;1, Sand;1, Sand;1, Sand;12,Grass(swamp);1, Sand;1, Sand;1, Sand;18, ice
+2, Plain;2, Grass;2, Grass;2, Grass;12,Grass(swamp);1, Sand;2, Grass;2, Grass;18, ice
+3, Water(river);3, Water;3, Water;3, Water;3, Water;3, Water;3, Water;3, Water;19,water (frozen)
+4, Forest;4, Grass;4, Grass;10, Mycelium;12,Grass(swamp);4, Grass;4, Grass;16, Grass (honey);4, Grass
+5, Jungle;5, Grass;5, Grass;10, Mycelium;12,Grass(swamp);5, Grass;14,Burned;16, Grass (honey);5, Grass

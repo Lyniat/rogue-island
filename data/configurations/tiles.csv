@@ -15,3 +15,7 @@ ID;NAME;CHAR;R;G;B
 13;palm;;0;100;0
 14;burned ground;;120;0;0
 15;invisible wall;;0;255;255
+16;grass (honey);;255;100;0
+17;tree (honey);;120;20;0
+18;ice;;120;160;210
+19;water(river frozen);;100;140;190
