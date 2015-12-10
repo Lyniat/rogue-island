@@ -9,12 +9,12 @@ SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 100
 
 # size of the map
-MAP_SIZE = 512
+MAP_SIZE = 1024
 
 VISUAL_WIDTH = 150
 VISUAL_HEIGHT = 90
 
-LIMIT_FPS = 120  # 20 frames-per-second maximum
+LIMIT_FPS = 120  # 120 frames-per-second maximum (for testing)
 
 FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
@@ -174,6 +174,8 @@ player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', libtcod.white)
 
 # the list of objects with those two
 objects = [player]
+
+
 
 # generate map (at this point it's not drawn to the screen)
 info_text = Info_text("                                                                              ")

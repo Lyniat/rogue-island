@@ -4,7 +4,9 @@ import Image
 import tiles
 import csv
 import ConfigParser
-
+import struct
+import zlib
+from opensimplex import OpenSimplex
 
 # generate voronoi diagramm
 def generate_voronoi_diagram(size, info_text, map):
@@ -33,17 +35,39 @@ def generate_voronoi_diagram(size, info_text, map):
     MUSHROOM_PROBABILITY = int(config.get("BiomeAttributes", "MushroomProbability"))
     MUSHROOM_CELLULAR_ITERATIONS = int(config.get("BiomeAttributes", "MushroomCellularIterations"))
 
+    tmp = OpenSimplex()
+
+
+    # image for noise map
+    img = Image.new('RGB', (size, size), "white")
+    pixels = img.load()  # create the pixel map
+
+    for x in range(size):
+        for y in range(size):
+            red = int(tmp.noise2d(x=x, y=y) * 255)
+            green = int(tmp.noise2d(x=x, y=y) * 255)
+            blue = int(tmp.noise2d(x=x, y=y) * 255)
+
+            pixels[x, y] = (red, green, blue)
+
+        update_text = "generating noise: " + str(to_percent((x * 1.0) / size)) + " percent"
+        info_text.set(update_text)
+
+    img.save('complete_map.png')
+
+
     global start_x, start_y
     start_x = 12
     start_y = 12
 
-    global new_map
-    new_map = [[tiles.Tile(0, False)
-                for y in range(size)]
-               for x in range(size)]
+
     tilemap = [[0
                 for y in range(size)]
                for x in range(size)]
+
+    ##heightmap.saveImage("perlinnoise")
+
+    #tilemap = np.zeros((size,size), dtype=np.uint8)
 
     num_cells = size / CELL_DIVISION
     nx = []
@@ -79,7 +103,7 @@ def generate_voronoi_diagram(size, info_text, map):
             j = -1
             for i in range(num_cells):
                 d = math.fabs(nx[i] - x) + math.fabs(
-                    ny[i] - y)  # math.fabs(nx[i] - x) + math.fabs(ny[i] - y)#math.hypot(nx[i] - x, ny[i] - y)
+                    ny[i] - y)  #math.fabs(nx[i] - x) + math.fabs(ny[i] - y)#math.hypot(nx[i] - x, ny[i] - y)
                 if d < dmin:
                     dmin = d
                     j = i
@@ -87,14 +111,12 @@ def generate_voronoi_diagram(size, info_text, map):
 
         update_text = "generating terrain: " + str(to_percent((y * 1.0) / size)) + " percent"
         info_text.set(update_text)
-
     # prevent island from colliding with wall
     for y in range(size):
         for x in range(size):
             dist = math.sqrt((size / 2 - x) ** 2 + (size / 2 - y) ** 2)
             if dist > (size / 2 - BORDER_TO_WALL):
                 tilemap[x][y] = 0
-
 
     # add sand in grass
     for x in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1):
@@ -238,8 +260,6 @@ def generate_voronoi_diagram(size, info_text, map):
 
     update_text = "terrain generation finished"
     info_text.set(update_text)
-
-    map = new_map
 
     update_text = "generating biomes"
     info_text.set(update_text)
@@ -528,7 +548,9 @@ def generate_voronoi_diagram(size, info_text, map):
                     if not char: break
                     if tilemap[x + row][y + line] == 16:
                         if char == "#":
-                            tilemap[x + row][y + line] = 17
+                            r = random.randrange(7)
+                            if not r == 0:
+                                tilemap[x + row][y + line] = 17
                     row += 1
                     if char == "\n":
                         row = 0
@@ -552,7 +574,9 @@ def generate_voronoi_diagram(size, info_text, map):
                     if not char: break
                     if tilemap[x + row][y + line] == 16:
                         if char == "#":
-                            tilemap[x + row][y + line] = 17
+                            r = random.randrange(7)
+                            if not r == 0:
+                                tilemap[x + row][y + line] = 17
                     row += 1
                     if char == "\n":
                         row = 0
@@ -648,8 +672,29 @@ def to_percent(value):
 
 
 def write_map_file(size, map):
-    with open("save.txt", "a") as savefile:
+    with open("save.bin", "wb") as savefile:
+        savefile.seek(0)
+        savefile.truncate()
         for x in range(size):
-            for y in range(size):
+            for y in range(0,size-1,2):
+                format = "c"
+                savefile.write(struct.pack(format,chr((map[x][y] + 128) + (map[x][y+1]))))
+
+    with open("save.txt", "w") as savefile:
+        savefile.seek(0)
+        savefile.truncate()
+        for x in range(size):
+            for y in range(0,size-1,2):
                 savefile.write(str(map[x][y]) + ",")
             savefile.write("\n")
+
+    with open("save_zip.bin", "wb") as savefile:
+        savefile.seek(0)
+        savefile.truncate()
+        data = ""
+        for x in range(size):
+            for y in range(0,size-1,2):
+                format = "c"
+                data += struct.pack(format,chr((map[x][y] + 128) + (map[x][y+1])))
+        compressed = zlib.compress(data,9)
+        savefile.write(compressed)
