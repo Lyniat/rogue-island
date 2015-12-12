@@ -8,6 +8,12 @@ import struct
 import zlib
 from opensimplex import OpenSimplex
 
+
+gen = OpenSimplex()
+def noise(nx, ny):
+    # Rescale from -1.0:+1.0 to 0.0:1.0
+    return gen.noise2d(nx, ny) / 2.0 + 0.5
+
 # generate voronoi diagramm
 def generate_voronoi_diagram(size, info_text, map):
     # read cfg
@@ -35,6 +41,10 @@ def generate_voronoi_diagram(size, info_text, map):
     MUSHROOM_PROBABILITY = int(config.get("BiomeAttributes", "MushroomProbability"))
     MUSHROOM_CELLULAR_ITERATIONS = int(config.get("BiomeAttributes", "MushroomCellularIterations"))
 
+    tilemap = [[0
+                for y in range(size)]
+               for x in range(size)]
+
     tmp = OpenSimplex()
 
 
@@ -42,18 +52,57 @@ def generate_voronoi_diagram(size, info_text, map):
     img = Image.new('RGB', (size, size), "white")
     pixels = img.load()  # create the pixel map
 
+    side_distance = math.sqrt((size / 2)** 2 + (size / 2)**2)
+
     for x in range(size):
         for y in range(size):
-            red = int(tmp.noise2d(x=x, y=y) * 255)
-            green = int(tmp.noise2d(x=x, y=y) * 255)
-            blue = int(tmp.noise2d(x=x, y=y) * 255)
 
-            pixels[x, y] = (red, green, blue)
+            '''
+            JAVA:
+            double value = noise.eval(x / FEATURE_SIZE, y / FEATURE_SIZE, 0.0);
+			int rgb = 0x010101 * (int)((value + 1) * 127.5);
+            '''
 
-        update_text = "generating noise: " + str(to_percent((x * 1.0) / size)) + " percent"
+            nx = x/float(size) - 0.5
+            ny = y/float(size) - 0.5
+            value = (noise(nx*20, ny*20)+1)/2
+
+            distance = 1-(math.sqrt((x - size / 2) ** 2 + (y - size / 2) ** 2)/side_distance)
+
+            distance += value
+
+            distance **= 1.25
+
+            value = distance-1
+
+
+            if value < 0:
+                value = 0
+
+            if value < 0.2:
+                tilemap[x][y] = 0
+            if value >= 0.2 and value < 0.4:
+                tilemap[x][y] = 2
+            if value >= 0.4 and value < 0.6:
+                tilemap[x][y] = 4
+            if value >= 0.6:
+                tilemap[x][y] = 5
+
+
+            color = int(value *255)
+
+            red = int((tmp.noise3d(x,y,0)+1)*127)
+            green = int((tmp.noise3d(x,y,0)+1)*127)
+            blue = int((tmp.noise3d(x,y,0)+1)*127)
+
+            #print value
+
+            pixels[x, y] = (color, color, color)
+
+        update_text = "generating noise: " + str(to_percent((x * 1.0) / size)) + "%%"
         info_text.set(update_text)
 
-    img.save('complete_map.png')
+    img.save('noise_map.png')
 
 
     global start_x, start_y
@@ -61,10 +110,7 @@ def generate_voronoi_diagram(size, info_text, map):
     start_y = 12
 
 
-    tilemap = [[0
-                for y in range(size)]
-               for x in range(size)]
-
+    '''
     ##heightmap.saveImage("perlinnoise")
 
     #tilemap = np.zeros((size,size), dtype=np.uint8)
@@ -109,14 +155,18 @@ def generate_voronoi_diagram(size, info_text, map):
                     j = i
             tilemap[x][y] = nt[j]
 
-        update_text = "generating terrain: " + str(to_percent((y * 1.0) / size)) + " percent"
+        update_text = "generating terrain: " + str(to_percent((y * 1.0) / size)) + "%%"
         info_text.set(update_text)
+
+        '''
+
     # prevent island from colliding with wall
     for y in range(size):
         for x in range(size):
             dist = math.sqrt((size / 2 - x) ** 2 + (size / 2 - y) ** 2)
             if dist > (size / 2 - BORDER_TO_WALL):
                 tilemap[x][y] = 0
+
 
     # add sand in grass
     for x in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1):
@@ -134,7 +184,7 @@ def generate_voronoi_diagram(size, info_text, map):
                             if r == 0:
                                 tilemap[xt][yt] = 1
 
-        update_text = "adding sand: " + str(to_percent((x * 1.0) / (size - 9))) + " percent"
+        update_text = "adding sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
         info_text.set(update_text)
 
     # add sand in water
@@ -153,7 +203,7 @@ def generate_voronoi_diagram(size, info_text, map):
                             if r == 0:
                                 tilemap[xt][yt] = 1
 
-        update_text = "removing water: " + str(to_percent((x * 1.0) / (size - 19))) + " percent"
+        update_text = "removing water: " + str(to_percent((x * 1.0) / (size - 19))) + "%%"
         info_text.set(update_text)
 
     # smooth sand
@@ -173,7 +223,7 @@ def generate_voronoi_diagram(size, info_text, map):
 
             if counter > 2:
                 tilemap[x][y] = 0
-        update_text = "smoothing sand: " + str(to_percent((x * 1.0) / (size - 9))) + " percent"
+        update_text = "smoothing sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
         info_text.set(update_text)
 
     # create rivers
@@ -235,8 +285,8 @@ def generate_voronoi_diagram(size, info_text, map):
                 for n in range(-1,1):
                     tilemap[x+m][y+n] = 3
 
-            update_text = "creating river: " + str(to_percent((i + 1) / river_num)) + " percent"
-            info_text.set(update_text)
+        update_text = "creating river: " + str(to_percent(river_num/(i+1))) + "%%"
+        info_text.set(update_text)
 
 
     # image for tilemap
@@ -259,9 +309,6 @@ def generate_voronoi_diagram(size, info_text, map):
     img.save('tile_map.png')
 
     update_text = "terrain generation finished"
-    info_text.set(update_text)
-
-    update_text = "generating biomes"
     info_text.set(update_text)
 
     # def generate_biomes(size):
@@ -297,6 +344,9 @@ def generate_voronoi_diagram(size, info_text, map):
                     dmin = d
                     j = i
             biomemap[x][y] = nt[j]
+
+        update_text = "generating biomes: " + str(to_percent((y * 1.0) / size)) + "%%"
+        info_text.set(update_text)
 
     # combine technical and special biomes
     with open("data/configurations/biomes.csv", 'rb') as f:
@@ -374,7 +424,7 @@ def generate_voronoi_diagram(size, info_text, map):
                             line += line_increaser
                     file.close()
 
-        update_text = "adding buildings: " + str(to_percent((x * 1.0) / (size - 28))) + " percent"
+        update_text = "adding buildings: " + str(to_percent((x * 1.0) / (size - 28))) + "%%"
         info_text.set(update_text)
 
     # swamp lakes
@@ -394,7 +444,7 @@ def generate_voronoi_diagram(size, info_text, map):
                                 if not r == 0:
                                     tilemap[x + m][y + n] = 3
 
-        update_text = "adding ponds: " + str(to_percent((x * 1.0) / (size - 16))) + " percent"
+        update_text = "adding ponds: " + str(to_percent((x * 1.0) / (size - 16))) + "%%"
         info_text.set(update_text)
 
     # generate objects
@@ -426,7 +476,7 @@ def generate_voronoi_diagram(size, info_text, map):
                 if r == 0:
                     tilemap[x][y] = 13
 
-        update_text = "adding trees: " + str(to_percent((x * 1.0) / size)) + " percent"
+        update_text = "adding trees: " + str(to_percent((x * 1.0) / size)) + "%%"
         info_text.set(update_text)
 
     # cellular for mushroom
@@ -481,7 +531,7 @@ def generate_voronoi_diagram(size, info_text, map):
                     if trees_around >= 5:
                         tilemap[x][y] = 11
 
-            update_text = "coalescing mushrooms: " + str(to_percent((x * 1.0) / (size - 2))) + " percent"
+            update_text = "coalescing mushrooms: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
             info_text.set(update_text)
 
     # castle for burned biome
@@ -528,7 +578,7 @@ def generate_voronoi_diagram(size, info_text, map):
                         line += 1
                 file.close()
 
-        update_text = "building up strongholds: " + str(to_percent((x * 1.0) / (size - 2))) + " percent"
+        update_text = "building up strongholds: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
         info_text.set(update_text)
 
     # honeycombs for bees
@@ -583,7 +633,7 @@ def generate_voronoi_diagram(size, info_text, map):
                         line += 1
                 file.close()
 
-        update_text = "creating honeycombs: " + str(to_percent((x * 1.0) / (size - 2))) + " percent"
+        update_text = "creating honeycombs: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
         info_text.set(update_text)
 
     # remove invisible walls
