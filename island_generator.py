@@ -9,157 +9,136 @@ import zlib
 from opensimplex import OpenSimplex
 
 
-gen = OpenSimplex()
 def noise(nx, ny):
     # Rescale from -1.0:+1.0 to 0.0:1.0
     return gen.noise2d(nx, ny) / 2.0 + 0.5
 
-# generate voronoi diagramm
-def generate_voronoi_diagram(size, info_text, map):
+
+def initialize(map_size, info):
+    global size
+    size = map_size
+
+    global info_text
+    info_text = info
+
+    global gen
+    gen = OpenSimplex()
+
     # read cfg
     # generic attributes
     config = ConfigParser.ConfigParser()
     config.read('data/configurations/generator.cfg')
+    global CELL_DIVISION
     CELL_DIVISION = int(config.get("GenericAttributes", "CellDivision"))
+    global BORDER_WATER
     BORDER_WATER = float(config.get("GenericAttributes", "BorderWater"))
+    global BORDER_GRASS
     BORDER_GRASS = float(config.get("GenericAttributes", "BorderGrass"))
+    global BORDER_JUNGLE
     BORDER_JUNGLE = float(config.get("GenericAttributes", "BorderJungle"))
+    global BORDER_TO_WALL
     BORDER_TO_WALL = int(config.get("GenericAttributes", "BorderWall"))
+    global SAND_IN_GRASS_RANGE
     SAND_IN_GRASS_RANGE = int(config.get("GenericAttributes", "SandInGrassRange"))
+    global SAND_IN_WATER_RANGE
     SAND_IN_WATER_RANGE = int(config.get("GenericAttributes", "SandInWaterRange"))
+    global RIVER_DIVISION
     RIVER_DIVISION = int(config.get("GenericAttributes", "RiverDivision"))
+    global RIVER_RANGE
     RIVER_RANGE = int(config.get("GenericAttributes", "RiverRange"))
+    global RIVER_LAKE_SIZE
     RIVER_LAKE_SIZE = int(config.get("GenericAttributes", "RiverLakeSize"))
+    global BUILDING_PROBABILITY
     BUILDING_PROBABILITY = int(config.get("BiomeAttributes", "BuildingProbability"))
+    global POND_PROBABILITY
     POND_PROBABILITY = int(config.get("BiomeAttributes", "PondProbability"))
+    global POND_MIN_SIZE
     POND_MIN_SIZE = int(config.get("BiomeAttributes", "PondMinSize"))
+    global POND_MAX_SIZE
     POND_MAX_SIZE = int(config.get("BiomeAttributes", "PondMaxSize"))
+    global TREE_PROBABILITY_BEACH
     TREE_PROBABILITY_BEACH = int(config.get("BiomeAttributes", "TreeProbabilityBeach"))
+    global TREE_PROBABILITY_PLAIN
     TREE_PROBABILITY_PLAIN = int(config.get("BiomeAttributes", "TreeProbabilityPlain"))
+    global TREE_PROBABILITY_FOREST
     TREE_PROBABILITY_FOREST = int(config.get("BiomeAttributes", "TreeProbabilityForest"))
+    global TREE_PROBABILITY_JUNGLE
     TREE_PROBABILITY_JUNGLE = int(config.get("BiomeAttributes", "TreeProbabilityJungle"))
+    global MUSHROOM_PROBABILITY
     MUSHROOM_PROBABILITY = int(config.get("BiomeAttributes", "MushroomProbability"))
+    global MUSHROOM_CELLULAR_ITERATIONS
     MUSHROOM_CELLULAR_ITERATIONS = int(config.get("BiomeAttributes", "MushroomCellularIterations"))
 
-    tilemap = [[0
-                for y in range(size)]
-               for x in range(size)]
+    update_text = "initialized"
+    info_text.set(update_text)
 
-    tmp = OpenSimplex()
 
+# generate voronoi diagramm
+def generate_noise(process_id, processes, tilemap):
+    finished_processes = processes
 
     # image for noise map
-    img = Image.new('RGB', (size, size), "white")
-    pixels = img.load()  # create the pixel map
+    # img = Image.new('RGB', (size, size), "white")
+    # pixels = img.load()  # create the pixel map
 
-    side_distance = math.sqrt((size / 2)** 2 + (size / 2)**2)
+    side_distance = math.sqrt((size / 2) ** 2 + (size / 2) ** 2)
 
-    for x in range(size):
+    for x in range(process_id, size, 2):
         for y in range(size):
 
-            '''
-            JAVA:
-            double value = noise.eval(x / FEATURE_SIZE, y / FEATURE_SIZE, 0.0);
-			int rgb = 0x010101 * (int)((value + 1) * 127.5);
-            '''
+            nx = x / float(size) - 0.5
+            ny = y / float(size) - 0.5
+            value = (noise(nx * 20, ny * 20) + 1) / 2
 
-            nx = x/float(size) - 0.5
-            ny = y/float(size) - 0.5
-            value = (noise(nx*20, ny*20)+1)/2
-
-            distance = 1-(math.sqrt((x - size / 2) ** 2 + (y - size / 2) ** 2)/side_distance)
+            distance = 1 - (math.sqrt((x - size / 2) ** 2 + (y - size / 2) ** 2) / side_distance)
 
             distance += value
 
             distance **= 1.25
 
-            value = distance-1
-
+            value = distance - 1
 
             if value < 0:
                 value = 0
 
             if value < 0.2:
-                tilemap[x][y] = 0
+                tilemap[x, y] = 0
             if value >= 0.2 and value < 0.4:
-                tilemap[x][y] = 2
+                tilemap[x, y] = 2
             if value >= 0.4 and value < 0.6:
-                tilemap[x][y] = 4
+                tilemap[x, y] = 4
             if value >= 0.6:
-                tilemap[x][y] = 5
+                tilemap[x, y] = 5
 
+            color = int(value * 255)
 
-            color = int(value *255)
+            red = int((gen.noise3d(x, y, 0) + 1) * 127)
+            green = int((gen.noise3d(x, y, 0) + 1) * 127)
+            blue = int((gen.noise3d(x, y, 0) + 1) * 127)
 
-            red = int((tmp.noise3d(x,y,0)+1)*127)
-            green = int((tmp.noise3d(x,y,0)+1)*127)
-            blue = int((tmp.noise3d(x,y,0)+1)*127)
+            # print value
 
-            #print value
-
-            pixels[x, y] = (color, color, color)
+            # pixels[x, y] = (color, color, color)
 
         update_text = "generating noise: " + str(to_percent((x * 1.0) / size)) + "%%"
         info_text.set(update_text)
 
-    img.save('noise_map.png')
-
+    # img.save('noise_map.png')
 
     global start_x, start_y
     start_x = 12
     start_y = 12
 
+    finished_processes.value += 1
+    print "finished"
+    print finished_processes
 
-    '''
-    ##heightmap.saveImage("perlinnoise")
-
-    #tilemap = np.zeros((size,size), dtype=np.uint8)
-
-    num_cells = size / CELL_DIVISION
-    nx = []
-    ny = []
-    nt = []
-    for i in range(num_cells):
-        rx = random.randrange(size)
-        ry = random.randrange(size)
-        nx.append(rx)
-        ny.append(ry)
-
-        distance = math.sqrt((rx - size / 2) ** 2 + (ry - size / 2) ** 2)
-        if distance > size / 2.5:
-            nt.append(0)
+    if finished_processes.value == 2:
+        create_island(tilemap)
+        print "create started"
 
 
-        elif size / BORDER_WATER > distance > size / BORDER_GRASS:
-            r = random.randrange(4)
-            if r == 0:
-                nt.append(0)
-            else:
-                nt.append(2)
-        elif size / BORDER_GRASS > distance > size / BORDER_JUNGLE:
-            nt.append(4)
-        elif size / BORDER_JUNGLE > distance:
-            nt.append(5)
-        else:
-            nt.append(2)
-
-    for y in range(size):
-        for x in range(size):
-            dmin = math.hypot(size - 1, size - 1)
-            j = -1
-            for i in range(num_cells):
-                d = math.fabs(nx[i] - x) + math.fabs(
-                    ny[i] - y)  #math.fabs(nx[i] - x) + math.fabs(ny[i] - y)#math.hypot(nx[i] - x, ny[i] - y)
-                if d < dmin:
-                    dmin = d
-                    j = i
-            tilemap[x][y] = nt[j]
-
-        update_text = "generating terrain: " + str(to_percent((y * 1.0) / size)) + "%%"
-        info_text.set(update_text)
-
-        '''
-
+def create_island(tilemap):
     # prevent island from colliding with wall
     for y in range(size):
         for x in range(size):
@@ -281,11 +260,11 @@ def generate_voronoi_diagram(size, info_text, map):
             if tilemap[x][y] == 0:
                 break
 
-            for m in range(-1,1):
-                for n in range(-1,1):
-                    tilemap[x+m][y+n] = 3
+            for m in range(-1, 1):
+                for n in range(-1, 1):
+                    tilemap[x + m][y + n] = 3
 
-        update_text = "creating river: " + str(to_percent(river_num/(i+1))) + "%%"
+        update_text = "creating river: " + str(to_percent(river_num / (i + 1))) + "%%"
         info_text.set(update_text)
 
 
@@ -586,7 +565,7 @@ def generate_voronoi_diagram(size, info_text, map):
         for y in range(1, size - 26, 10):
             value = tilemap[x][y]
             # if honey ground
-            if 1:#value == 16 or value == 17:
+            if 1:  # value == 16 or value == 17:
 
                 file = open("data/structures/hexagon.txt", "r")
 
@@ -612,7 +591,7 @@ def generate_voronoi_diagram(size, info_text, map):
         for y in range(6, size - 26, 10):
             value = tilemap[x][y]
             # if honey ground
-            if 1:#value == 16:
+            if 1:  # value == 16:
 
                 file = open("data/structures/hexagon.txt", "r")
 
@@ -726,15 +705,15 @@ def write_map_file(size, map):
         savefile.seek(0)
         savefile.truncate()
         for x in range(size):
-            for y in range(0,size-1,2):
+            for y in range(0, size - 1, 2):
                 format = "c"
-                savefile.write(struct.pack(format,chr((map[x][y] + 128) + (map[x][y+1]))))
+                savefile.write(struct.pack(format, chr((map[x][y] + 128) + (map[x][y + 1]))))
 
     with open("save.txt", "w") as savefile:
         savefile.seek(0)
         savefile.truncate()
         for x in range(size):
-            for y in range(0,size-1,2):
+            for y in range(0, size - 1, 2):
                 savefile.write(str(map[x][y]) + ",")
             savefile.write("\n")
 
@@ -743,8 +722,8 @@ def write_map_file(size, map):
         savefile.truncate()
         data = ""
         for x in range(size):
-            for y in range(0,size-1,2):
+            for y in range(0, size - 1, 2):
                 format = "c"
-                data += struct.pack(format,chr((map[x][y] + 128) + (map[x][y+1])))
-        compressed = zlib.compress(data,9)
+                data += struct.pack(format, chr((map[x][y] + 128) + (map[x][y + 1])))
+        compressed = zlib.compress(data, 9)
         savefile.write(compressed)

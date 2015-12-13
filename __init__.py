@@ -3,13 +3,18 @@ import thread
 import tiles
 import island_generator
 import color
+from multiprocessing import Process, Queue, Value, Array
+from ctypes import c_int
 
 # actual size of the window
 SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 100
 
 # size of the map
-MAP_SIZE = 1024
+MAP_SIZE = 512
+
+shared_var = Value(c_int)
+shared_tilemap = Array('l',[range(10),range(10)])
 
 VISUAL_WIDTH = 150
 VISUAL_HEIGHT = 90
@@ -35,7 +40,6 @@ class Info_text:
         return self.text
     def set(self,t):
         self.text = t
-
 
 class Object:
     # this is a generic object: the player, a monster, an item, the stairs...
@@ -180,10 +184,18 @@ objects = [player]
 # generate map (at this point it's not drawn to the screen)
 info_text = Info_text("                                                                              ")
 global map
-generator_thread = thread.start_new_thread(island_generator.generate_voronoi_diagram, (MAP_SIZE, info_text, map));
+#generator_thread = thread.start_new_thread(island_generator.generate_voronoi_diagram, (MAP_SIZE, info_text, map));
 #biome_thread = thread.start_new_thread(island_generator.generate_biomes,(MAP_SIZE,));
 # map = island_generator.generate_voronoi_diagram(MAP_SIZE,libtcod)
 # biome_generator.make_map(MAP_SIZE)
+
+island_generator.initialize(MAP_SIZE,info_text)
+q = Queue()
+p1 = Process(target=island_generator.generate_noise, args=(0,shared_var,shared_tilemap))
+p2 = Process(target=island_generator.generate_noise, args=(1,shared_var,shared_tilemap))
+p1.start()
+p2.start()
+
 
 # player.x = island_generator.get_start_position()[0]
 # player.y = island_generator.get_start_position()[1]
