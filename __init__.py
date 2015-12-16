@@ -4,17 +4,22 @@ import tiles
 import island_generator
 import color
 from multiprocessing import Process, Queue, Value, Array
+import multiprocessing
 from ctypes import c_int
+import datetime
 
 # actual size of the window
 SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 100
 
 # size of the map
-MAP_SIZE = 512
+MAP_SIZE = 1024
 
 shared_var = Value(c_int)
-shared_tilemap = Array('l',[range(10),range(10)])
+shared_percent = Value(c_int)
+shared_tilemap = Array('l',MAP_SIZE*MAP_SIZE)
+
+#start_time = datetime.now().time()
 
 VISUAL_WIDTH = 150
 VISUAL_HEIGHT = 90
@@ -161,6 +166,7 @@ def handle_keys():
 
 def update_info(text):
     middle = SCREEN_WIDTH/2 - len(text)/2
+    text = str(((float(shared_percent.value) / MAP_SIZE**2)*100)+6.5) + "%%"
     libtcod.console_print(0,middle, SCREEN_HEIGHT/2, text)
 
 
@@ -190,11 +196,35 @@ global map
 # biome_generator.make_map(MAP_SIZE)
 
 island_generator.initialize(MAP_SIZE,info_text)
-q = Queue()
-p1 = Process(target=island_generator.generate_noise, args=(0,shared_var,shared_tilemap))
-p2 = Process(target=island_generator.generate_noise, args=(1,shared_var,shared_tilemap))
-p1.start()
-p2.start()
+
+processor_num = multiprocessing.cpu_count();
+
+print processor_num
+
+if processor_num == 1:
+    p1 = Process(target=island_generator.generate_noise, args=(0,shared_var,shared_tilemap,shared_percent,1))
+    p1.start()
+    #p1.join()
+if processor_num == 2:
+    p1 = Process(target=island_generator.generate_noise, args=(0,shared_var,shared_tilemap,shared_percent,2))
+    p2 = Process(target=island_generator.generate_noise, args=(1,shared_var,shared_tilemap,shared_percent,2))
+    p1.start()
+    #p1.join()
+    p2.start()
+    #p2.join()
+if processor_num >= 4:
+    p1 = Process(target=island_generator.generate_noise, args=(0,shared_var,shared_tilemap,shared_percent,4))
+    p2 = Process(target=island_generator.generate_noise, args=(1,shared_var,shared_tilemap,shared_percent,4))
+    p3 = Process(target=island_generator.generate_noise, args=(2,shared_var,shared_tilemap,shared_percent,4))
+    p4 = Process(target=island_generator.generate_noise, args=(3,shared_var,shared_tilemap,shared_percent,4))
+    p1.start()
+    #p1.join()
+    p2.start()
+    #p2.join()
+    p3.start()
+    #p3.join()
+    p4.start()
+    #p4.join()
 
 
 # player.x = island_generator.get_start_position()[0]

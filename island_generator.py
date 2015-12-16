@@ -74,7 +74,7 @@ def initialize(map_size, info):
 
 
 # generate voronoi diagramm
-def generate_noise(process_id, processes, tilemap):
+def generate_noise(process_id, processes, tilemap, percent, steps):
     finished_processes = processes
 
     # image for noise map
@@ -83,7 +83,7 @@ def generate_noise(process_id, processes, tilemap):
 
     side_distance = math.sqrt((size / 2) ** 2 + (size / 2) ** 2)
 
-    for x in range(process_id, size, 2):
+    for x in range(process_id, size, steps):
         for y in range(size):
 
             nx = x / float(size) - 0.5
@@ -102,13 +102,13 @@ def generate_noise(process_id, processes, tilemap):
                 value = 0
 
             if value < 0.2:
-                tilemap[x, y] = 0
+                tilemap[x*size + y] = 0
             if value >= 0.2 and value < 0.4:
-                tilemap[x, y] = 2
+                tilemap[x*size + y] = 2
             if value >= 0.4 and value < 0.6:
-                tilemap[x, y] = 4
+                tilemap[x*size + y] = 4
             if value >= 0.6:
-                tilemap[x, y] = 5
+                tilemap[x*size + y] = 5
 
             color = int(value * 255)
 
@@ -119,6 +119,8 @@ def generate_noise(process_id, processes, tilemap):
             # print value
 
             # pixels[x, y] = (color, color, color)
+
+            percent.value += 1
 
         update_text = "generating noise: " + str(to_percent((x * 1.0) / size)) + "%%"
         info_text.set(update_text)
@@ -144,24 +146,24 @@ def create_island(tilemap):
         for x in range(size):
             dist = math.sqrt((size / 2 - x) ** 2 + (size / 2 - y) ** 2)
             if dist > (size / 2 - BORDER_TO_WALL):
-                tilemap[x][y] = 0
+                tilemap[x*size + y] = 0
 
 
     # add sand in grass
     for x in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1):
         for y in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1):
 
-            val = tilemap[x][y]
+            val =  tilemap[x*size + y]
 
             if val == 0:
                 for xs in range(-SAND_IN_GRASS_RANGE, SAND_IN_GRASS_RANGE):
                     for ys in range(-SAND_IN_GRASS_RANGE, SAND_IN_GRASS_RANGE):
                         xt = x + xs
                         yt = y + ys
-                        if tilemap[xt][yt] == 2 or tilemap[xt][yt] == 4 or tilemap[xt][yt] == 5:
+                        if tilemap[xt*size + yt] == 2 or tilemap[xt*size + yt] == 4 or tilemap[xt*size + yt] == 5:
                             r = random.randrange(5)
                             if r == 0:
-                                tilemap[xt][yt] = 1
+                                tilemap[xt*size + yt] = 1
 
         update_text = "adding sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
         info_text.set(update_text)
@@ -170,17 +172,17 @@ def create_island(tilemap):
     for x in range(SAND_IN_WATER_RANGE, size - SAND_IN_WATER_RANGE):
         for y in range(SAND_IN_WATER_RANGE, size - SAND_IN_WATER_RANGE):
 
-            val = tilemap[x][y]
+            val = tilemap[x*size + y]
 
             if val == 2 or val == 4 or val == 5:
                 for xs in range(-SAND_IN_WATER_RANGE, SAND_IN_WATER_RANGE):
                     for ys in range(-SAND_IN_WATER_RANGE, SAND_IN_WATER_RANGE):
                         xt = x + xs
                         yt = y + ys
-                        if tilemap[xt][yt] == 0:
+                        if tilemap[xt*size + yt] == 0:
                             r = random.randrange(5)
                             if r == 0:
-                                tilemap[xt][yt] = 1
+                                tilemap[xt*size + yt] = 1
 
         update_text = "removing water: " + str(to_percent((x * 1.0) / (size - 19))) + "%%"
         info_text.set(update_text)
@@ -191,20 +193,20 @@ def create_island(tilemap):
 
             counter = 0
 
-            if tilemap[x + 1][y] == 0:
+            if tilemap[(x+1)*size + y] == 0:
                 counter += 1
-            if tilemap[x - 1][y] == 0:
+            if tilemap[(x-1)*size + y] == 0:
                 counter += 1
-            if tilemap[x][y + 1] == 0:
+            if tilemap[x*size + (y+1)] == 0:
                 counter += 1
-            if tilemap[x][y - 1] == 0:
+            if tilemap[x*size + (y+1)] == 0:
                 counter += 1
 
             if counter > 2:
-                tilemap[x][y] = 0
+                tilemap[xt*size + yt] = 0
         update_text = "smoothing sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
         info_text.set(update_text)
-
+    '''
     # create rivers
     river_num = size / RIVER_DIVISION;
     for i in range(river_num):
@@ -267,22 +269,22 @@ def create_island(tilemap):
         update_text = "creating river: " + str(to_percent(river_num / (i + 1))) + "%%"
         info_text.set(update_text)
 
-
+    '''
     # image for tilemap
     img = Image.new('RGB', (size, size), "white")
     pixels = img.load()  # create the pixel map
 
     for x in range(size):  # for every pixel:
         for y in range(size):
-            if tilemap[x][y] == 1:
+            if tilemap[x*size + y] == 1:
                 pixels[x, y] = (255, 255, 0)
-            elif tilemap[x][y] == 2:
+            elif tilemap[x*size + y] == 2:
                 pixels[x, y] = (0, 255, 0)
-            elif tilemap[x][y] == 3:
+            elif tilemap[x*size + y] == 3:
                 pixels[x, y] = (63, 63, 255)
-            elif tilemap[x][y] == 4:
+            elif tilemap[x*size + y] == 4:
                 pixels[x, y] = (0, 200, 0)
-            elif tilemap[x][y] == 5:
+            elif tilemap[x*size + y] == 5:
                 pixels[x, y] = (0, 127, 0)
 
     img.save('tile_map.png')
