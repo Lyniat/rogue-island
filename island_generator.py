@@ -1,12 +1,19 @@
 import random
 import math
 import Image
-import tiles
 import csv
 import ConfigParser
 import struct
 import zlib
 from opensimplex import OpenSimplex
+from multiprocessing import Process, Value, Array
+import multiprocessing
+from ctypes import c_int
+
+shared_var = Value(c_int)
+shared_tilemap = None
+
+processor_num = 0
 
 
 def noise(nx, ny):
@@ -15,6 +22,9 @@ def noise(nx, ny):
 
 
 def initialize(map_size, info):
+    global shared_tilemap
+    shared_tilemap = Array('l', map_size * map_size)
+
     global size
     size = map_size
 
@@ -69,14 +79,115 @@ def initialize(map_size, info):
     global MUSHROOM_CELLULAR_ITERATIONS
     MUSHROOM_CELLULAR_ITERATIONS = int(config.get("BiomeAttributes", "MushroomCellularIterations"))
 
-    update_text = "initialized"
-    info_text.set(update_text)
+    # update_text = "initialized"
+    # info_text.set(update_text)
+
+
+def start(map_size, shared_percent):
+    initialize(map_size, shared_percent)
+
+    global processor_num
+    processor_num = multiprocessing.cpu_count();
+
+    print processor_num
+
+    '''
+    if processor_num == 1:
+        p1 = Process(target=generate_noise, args=(0, shared_var, shared_tilemap, shared_percent, 1))
+        p1.start()
+    if processor_num == 2:
+        p1 = Process(target=generate_noise, args=(0, shared_var, shared_tilemap, shared_percent, 2))
+        p2 = Process(target=generate_noise, args=(1, shared_var, shared_tilemap, shared_percent, 2))
+        p1.start()
+        p2.start()
+    '''
+    p1 = None
+    p2 = None
+    p3 = None
+    p4 = None
+
+    if processor_num >= 4:
+        p1 = Process(target=generate_noise, args=(0, shared_var, shared_tilemap, shared_percent, 4))
+        p2 = Process(target=generate_noise, args=(1, shared_var, shared_tilemap, shared_percent, 4))
+        p3 = Process(target=generate_noise, args=(2, shared_var, shared_tilemap, shared_percent, 4))
+        p4 = Process(target=generate_noise, args=(3, shared_var, shared_tilemap, shared_percent, 4))
+        p1.start()
+        p2.start()
+        p3.start()
+        p4.start()
+
+    print "create started"
+
+    while shared_var.value != processor_num:
+        pass
+
+    p1.terminate()
+    p2.terminate()
+    p3.terminate()
+    p4.terminate()
+
+    print "create finished"
+
+    shared_var.value = 0
+    shared_percent.value = 0
+
+    create_border(shared_tilemap)
+
+    if processor_num >= 4:
+        p1 = Process(target=add_sand, args=(0, shared_var, shared_tilemap, shared_percent, 4))
+        p2 = Process(target=add_sand, args=(1, shared_var, shared_tilemap, shared_percent, 4))
+        p3 = Process(target=add_sand, args=(2, shared_var, shared_tilemap, shared_percent, 4))
+        p4 = Process(target=add_sand, args=(3, shared_var, shared_tilemap, shared_percent, 4))
+        p1.start()
+        p2.start()
+        p3.start()
+        p4.start()
+
+    print "add_sand started"
+
+    while shared_var.value != processor_num:
+        pass
+
+    p1.terminate()
+    p2.terminate()
+    p3.terminate()
+    p4.terminate()
+
+    print "add_sand finished"
+
+    shared_var.value = 0
+    shared_percent.value = 0
+
+    if processor_num >= 4:
+        p1 = Process(target=remove_water, args=(0, shared_var, shared_tilemap, shared_percent, 4))
+        p2 = Process(target=remove_water, args=(1, shared_var, shared_tilemap, shared_percent, 4))
+        p3 = Process(target=remove_water, args=(2, shared_var, shared_tilemap, shared_percent, 4))
+        p4 = Process(target=remove_water, args=(3, shared_var, shared_tilemap, shared_percent, 4))
+        p1.start()
+        p2.start()
+        p3.start()
+        p4.start()
+
+    print "remove_water started"
+
+    while shared_var.value != processor_num:
+        pass
+
+    p1.terminate()
+    p2.terminate()
+    p3.terminate()
+    p4.terminate()
+
+    print "remove_water finished"
+
+    shared_var.value = 0
+    shared_percent.value = 0
+
+    smooth_sand(shared_tilemap)
 
 
 # generate voronoi diagramm
 def generate_noise(process_id, processes, tilemap, percent, steps):
-    finished_processes = processes
-
     # image for noise map
     # img = Image.new('RGB', (size, size), "white")
     # pixels = img.load()  # create the pixel map
@@ -102,13 +213,13 @@ def generate_noise(process_id, processes, tilemap, percent, steps):
                 value = 0
 
             if value < 0.2:
-                tilemap[x*size + y] = 0
+                tilemap[x * size + y] = 0
             if value >= 0.2 and value < 0.4:
-                tilemap[x*size + y] = 2
+                tilemap[x * size + y] = 2
             if value >= 0.4 and value < 0.6:
-                tilemap[x*size + y] = 4
+                tilemap[x * size + y] = 4
             if value >= 0.6:
-                tilemap[x*size + y] = 5
+                tilemap[x * size + y] = 5
 
             color = int(value * 255)
 
@@ -122,8 +233,8 @@ def generate_noise(process_id, processes, tilemap, percent, steps):
 
             percent.value += 1
 
-        update_text = "generating noise: " + str(to_percent((x * 1.0) / size)) + "%%"
-        info_text.set(update_text)
+            # update_text = "generating noise: " + str(to_percent((x * 1.0) / size)) + "%%"
+            # info_text.set(update_text)
 
     # img.save('noise_map.png')
 
@@ -131,81 +242,90 @@ def generate_noise(process_id, processes, tilemap, percent, steps):
     start_x = 12
     start_y = 12
 
-    finished_processes.value += 1
+    processes.value += 1
     print "finished"
-    print finished_processes
-
-    if finished_processes.value == 2:
-        create_island(tilemap)
-        print "create started"
+    print processes
 
 
-def create_island(tilemap):
+def create_border(tilemap):
     # prevent island from colliding with wall
     for y in range(size):
         for x in range(size):
             dist = math.sqrt((size / 2 - x) ** 2 + (size / 2 - y) ** 2)
             if dist > (size / 2 - BORDER_TO_WALL):
-                tilemap[x*size + y] = 0
+                tilemap[x * size + y] = 0
 
 
-    # add sand in grass
-    for x in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1):
-        for y in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1):
-
-            val =  tilemap[x*size + y]
+def add_sand(process_id, processes, tilemap, percent, steps):
+    for x in range(process_id*2 + (SAND_IN_GRASS_RANGE + 1), size - (SAND_IN_GRASS_RANGE + 1), steps*2):
+        for y in range(SAND_IN_GRASS_RANGE + 1, size - SAND_IN_GRASS_RANGE - 1,2):
+            val = tilemap[x * size + y]
 
             if val == 0:
                 for xs in range(-SAND_IN_GRASS_RANGE, SAND_IN_GRASS_RANGE):
                     for ys in range(-SAND_IN_GRASS_RANGE, SAND_IN_GRASS_RANGE):
                         xt = x + xs
                         yt = y + ys
-                        if tilemap[xt*size + yt] == 2 or tilemap[xt*size + yt] == 4 or tilemap[xt*size + yt] == 5:
+                        if tilemap[xt * size + yt] == 2 or tilemap[xt * size + yt] == 4 or tilemap[xt * size + yt] == 5:
                             r = random.randrange(5)
                             if r == 0:
-                                tilemap[xt*size + yt] = 1
+                                tilemap[xt * size + yt] = 1
+        percent.value += 1
 
-        update_text = "adding sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
-        info_text.set(update_text)
+        # update_text = "adding sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
+        # info_text.set(update_text)
 
+    processes.value += 1
+    print "finished"
+    print processes
+
+
+def remove_water(process_id, processes, tilemap, percent, steps):
     # add sand in water
-    for x in range(SAND_IN_WATER_RANGE, size - SAND_IN_WATER_RANGE):
-        for y in range(SAND_IN_WATER_RANGE, size - SAND_IN_WATER_RANGE):
+    for x in range(process_id*2 + SAND_IN_WATER_RANGE, size - SAND_IN_WATER_RANGE, steps*2):
+        for y in range(SAND_IN_WATER_RANGE, size - SAND_IN_WATER_RANGE,2):
 
-            val = tilemap[x*size + y]
+            val = tilemap[x * size + y]
 
             if val == 2 or val == 4 or val == 5:
                 for xs in range(-SAND_IN_WATER_RANGE, SAND_IN_WATER_RANGE):
                     for ys in range(-SAND_IN_WATER_RANGE, SAND_IN_WATER_RANGE):
                         xt = x + xs
                         yt = y + ys
-                        if tilemap[xt*size + yt] == 0:
+                        if tilemap[xt * size + yt] == 0:
                             r = random.randrange(5)
                             if r == 0:
-                                tilemap[xt*size + yt] = 1
+                                tilemap[xt * size + yt] = 1
 
-        update_text = "removing water: " + str(to_percent((x * 1.0) / (size - 19))) + "%%"
-        info_text.set(update_text)
+        percent.value += 1
+        # update_text = "removing water: " + str(to_percent((x * 1.0) / (size - 19))) + "%%"
+        # info_text.set(update_text)
 
+    processes.value += 1
+    print "finished"
+    print processes
+
+
+def smooth_sand(tilemap):
     # smooth sand
     for x in range(4, size - 4):
         for y in range(4, size - 4):
 
             counter = 0
 
-            if tilemap[(x+1)*size + y] == 0:
+            if tilemap[(x + 1) * size + y] == 0:
                 counter += 1
-            if tilemap[(x-1)*size + y] == 0:
+            if tilemap[(x - 1) * size + y] == 0:
                 counter += 1
-            if tilemap[x*size + (y+1)] == 0:
+            if tilemap[x * size + (y + 1)] == 0:
                 counter += 1
-            if tilemap[x*size + (y+1)] == 0:
+            if tilemap[x * size + (y + 1)] == 0:
                 counter += 1
 
             if counter > 2:
-                tilemap[xt*size + yt] = 0
-        update_text = "smoothing sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
-        info_text.set(update_text)
+                tilemap[x * size + y] = 0
+                # update_text = "smoothing sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
+                # info_text.set(update_text)
     '''
     # create rivers
     river_num = size / RIVER_DIVISION;
@@ -276,15 +396,15 @@ def create_island(tilemap):
 
     for x in range(size):  # for every pixel:
         for y in range(size):
-            if tilemap[x*size + y] == 1:
+            if tilemap[x * size + y] == 1:
                 pixels[x, y] = (255, 255, 0)
-            elif tilemap[x*size + y] == 2:
+            elif tilemap[x * size + y] == 2:
                 pixels[x, y] = (0, 255, 0)
-            elif tilemap[x*size + y] == 3:
+            elif tilemap[x * size + y] == 3:
                 pixels[x, y] = (63, 63, 255)
-            elif tilemap[x*size + y] == 4:
+            elif tilemap[x * size + y] == 4:
                 pixels[x, y] = (0, 200, 0)
-            elif tilemap[x*size + y] == 5:
+            elif tilemap[x * size + y] == 5:
                 pixels[x, y] = (0, 127, 0)
 
     img.save('tile_map.png')
@@ -326,8 +446,8 @@ def create_island(tilemap):
                     j = i
             biomemap[x][y] = nt[j]
 
-        update_text = "generating biomes: " + str(to_percent((y * 1.0) / size)) + "%%"
-        info_text.set(update_text)
+            # update_text = "generating biomes: " + str(to_percent((y * 1.0) / size)) + "%%"
+            # info_text.set(update_text)
 
     # combine technical and special biomes
     with open("data/configurations/biomes.csv", 'rb') as f:
