@@ -3,15 +3,16 @@ import tiles
 import island_generator
 import color
 from ctypes import c_int
-from multiprocessing import Process, Value
+from multiprocessing import Value
 import thread
+import loader
 
 # actual size of the window
 SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 100
 
 # size of the map
-MAP_SIZE = 512
+MAP_SIZE = 2048
 
 VISUAL_WIDTH = 150
 VISUAL_HEIGHT = 90
@@ -184,7 +185,9 @@ objects = [player]
 # generate map (at this point it's not drawn to the screen)
 info_text = Info_text("                                                                              ")
 global map
-generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent));
+generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
+#map = loader.load_map()
+
 
 # player.x = island_generator.get_start_position()[0]
 # player.y = island_generator.get_start_position()[1]
