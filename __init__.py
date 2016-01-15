@@ -12,7 +12,7 @@ SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 100
 
 # size of the map
-MAP_SIZE = 2048
+MAP_SIZE = 512
 
 VISUAL_WIDTH = 150
 VISUAL_HEIGHT = 90
@@ -23,7 +23,7 @@ FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
 
-game_status = 0
+game_status = 1
 
 shared_percent = Value(c_int)
 
@@ -34,12 +34,15 @@ color_light_ground = libtcod.Color(200, 180, 50)
 
 
 class Info_text:
-    def __init__(self,value):
+    def __init__(self, value):
         self.set(value)
+
     def get(self):
         return self.text
-    def set(self,t):
+
+    def set(self, t):
         self.text = t
+
 
 class Object:
     # this is a generic object: the player, a monster, an item, the stairs...
@@ -52,7 +55,7 @@ class Object:
 
     def move(self, dx, dy):
         # move by the given amount, if the destination is not blocked
-        if not map[self.x + dx][self.y + dy].blocked:
+        #if not map[(self.x + dx) * MAP_SIZE + self.y + dy]: #if not blocked
             self.x += dx
             self.y += dy
 
@@ -73,19 +76,20 @@ class Player(Object):
 
 
 def update_visual_map():
+    size = MAP_SIZE
     for x in range(VISUAL_WIDTH):
         for y in range(VISUAL_HEIGHT):
             map_x = x + player.x - VISUAL_WIDTH / 2
             map_y = y + player.y - VISUAL_HEIGHT / 2
 
-            if map_x < len(map) and map_y < len(map[0]):
-                visual[x][y] = map[map_x][map_y]
-
+            if map_x < size and map_y < size:
+                visual[x][y] = map[map_x * size + map_y]
+                print map[map_x * size + map_y]
 
 def make_visual_map():
-    global visual
 
     # fill map with "unblocked" tiles
+    global visual
     visual = [[tiles.Tile(0, False)
                for y in range(VISUAL_HEIGHT)]
               for x in range(VISUAL_WIDTH)]
@@ -97,10 +101,12 @@ def render_all():
     global color_light_wall
     global color_light_ground
 
+    print visual
+
     # go through all tiles, and set their background color
     for y in range(VISUAL_HEIGHT):
         for x in range(VISUAL_WIDTH):
-            id = visual[x][y].id
+            id = visual[x][y]
             if id == 0:
                 # libtcod.console_set_char_background(con, x, y, color_dark_wall,libtcod.BKGND_SET)
                 random = libtcod.random_get_int(0, 0, 1)
@@ -122,7 +128,9 @@ def render_all():
             if id == 3:
                 libtcod.console_set_default_foreground(con, color.navy)
                 libtcod.console_put_char(con, x, y, '~', libtcod.BKGND_NONE)
-
+            else:
+                libtcod.console_set_default_foreground(con, color.white)
+                libtcod.console_put_char(con, x, y, '?', libtcod.BKGND_NONE)
 
     # draw all objects in the list
     for object in objects:
@@ -160,9 +168,9 @@ def handle_keys():
 
 
 def update_info(text):
-    middle = SCREEN_WIDTH/2 - len(text)/2
-    text = str(((float(shared_percent.value) / MAP_SIZE**2)*100)+6.5) + "%%"
-    libtcod.console_print(0,middle, SCREEN_HEIGHT/2, text)
+    middle = SCREEN_WIDTH / 2 - len(text) / 2
+    text = str(((float(shared_percent.value) / MAP_SIZE ** 2) * 100) + 6.5) + "%%"
+    libtcod.console_print(0, middle, SCREEN_HEIGHT / 2, text)
 
 
 #############################################
@@ -173,31 +181,29 @@ libtcod.console_set_custom_font('terminal8x8_gs_as.png', libtcod.FONT_TYPE_GREYS
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'ASCII Adventure', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
-
-# create object representing the player
-player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', libtcod.white)
-
-# the list of objects with those two
-objects = [player]
-
-
-
-# generate map (at this point it's not drawn to the screen)
-info_text = Info_text("                                                                              ")
 global map
-generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
-#map = loader.load_map()
 
+if game_status == 0:
+    info_text = Info_text("                                                                              ")
+    generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
 
-# player.x = island_generator.get_start_position()[0]
-# player.y = island_generator.get_start_position()[1]
+if game_status == 1:
+    map = loader.load_map()
+    # create object representing the player
+    player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', libtcod.white)
 
-# make_visual_map()
+    # the list of objects with those two
+    objects = [player]
+
+    player.x = 100
+    player.y = 100
+
+    make_visual_map()
 while not libtcod.console_is_window_closed():
 
     if game_status == 0:
         update_info(info_text.get())
-        #print generator_thread
+        # print generator_thread
 
     libtcod.console_flush()
 

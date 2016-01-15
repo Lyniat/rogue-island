@@ -193,12 +193,12 @@ def start(map_size, shared_percent):
 
     generate_biomes(shared_tilemap)
 
-    end_time =  time.clock()
-    difference_time = end_time -start_time
+    end_time = time.clock()
+    difference_time = end_time - start_time
 
-    write_map_file(size, shared_tilemap,difference_time)
+    write_map_file(size, shared_tilemap, difference_time)
 
-    print("generation took "+str(difference_time)+" seconds")
+    print("generation took " + str(difference_time) + " seconds")
 
 
 def generate_noise(process_id, processes, tilemap, percent, steps):
@@ -228,9 +228,9 @@ def generate_noise(process_id, processes, tilemap, percent, steps):
 
             if value < 0.2:
                 tilemap[x * size + y] = 0
-            if value >= 0.2 and value < 0.4:
+            if 0.2 <= value < 0.4:
                 tilemap[x * size + y] = 2
-            if value >= 0.4 and value < 0.6:
+            if 0.4 <= value < 0.6:
                 tilemap[x * size + y] = 4
             if value >= 0.6:
                 tilemap[x * size + y] = 5
@@ -321,25 +321,33 @@ def remove_water(process_id, processes, tilemap, percent, steps):
 
 
 def smooth_sand(tilemap):
-    # smooth sand
-    for x in range(4, size - 4):
-        for y in range(4, size - 4):
+    for i in range(3):
+        for x in range(1, size - 1):
+            for y in range(1, size - 1):
+                value = tilemap[x * size + y]
+                trees_around = 0
+                # if water
+                if value == 0:
+                    if tilemap[(x + 1) * size + y] == 1:
+                        trees_around += 1
+                    if tilemap[(x - 1) * size + y] == 1:
+                        trees_around += 1
+                    if tilemap[x * size + y + 1] == 1:
+                        trees_around += 1
+                    if tilemap[x * size + y - 1] == 1:
+                        trees_around += 1
 
-            counter = 0
+                    if tilemap[(x + 1) * size + y + 1] == 1:
+                        trees_around += 1
+                    if tilemap[(x + 1) * size + y - 1] == 1:
+                        trees_around += 1
+                    if tilemap[(x - 1) * size + y + 1] == 1:
+                        trees_around += 1
+                    if tilemap[(x - 1) * size + y - 1] == 1:
+                        trees_around += 1
 
-            if tilemap[(x + 1) * size + y] == 0:
-                counter += 1
-            if tilemap[(x - 1) * size + y] == 0:
-                counter += 1
-            if tilemap[x * size + (y + 1)] == 0:
-                counter += 1
-            if tilemap[x * size + (y + 1)] == 0:
-                counter += 1
-
-            if counter > 2:
-                tilemap[x * size + y] = 0
-                # update_text = "smoothing sand: " + str(to_percent((x * 1.0) / (size - 9))) + "%%"
-                # info_text.set(update_text)
+                    if trees_around >= 5:
+                        tilemap[x * size + y] = 1
 
 
 def create_rivers(tilemap):
@@ -358,6 +366,62 @@ def create_rivers(tilemap):
                 if distance <= RIVER_LAKE_SIZE:
                     tilemap[(x + m) * size + y + n] = 3
 
+        extra_distance = 1
+        x_position = 0
+        y_position = 0
+        value = 0
+        while 1:
+            for m in range(-extra_distance, extra_distance):
+                for n in range(-extra_distance, extra_distance):
+                    value = tilemap[(x + m) * size + y + n]
+                    print(value)
+                    if value == 0:
+                        x_position = x + m
+                        y_position = y + n
+                        break
+                if value == 0:
+                    break
+            extra_distance += 1
+            if value == 0:
+                    break
+
+        print "river created ppart 1"
+
+        while 1:
+            x_distance = math.fabs(x - x_position)
+            y_distance = math.fabs(y - y_position)
+
+            print(x_distance)
+            print(y_distance)
+
+            if x_distance > y_distance:
+                if x > x_position:
+                    x_direction = -1
+                else:
+                    x_direction = 1
+                y_direction = 0
+            else:
+                if y > y_position:
+                    y_direction = -1
+                else:
+                    y_direction = 1
+                x_direction = 0
+
+            x += random.randrange(-1, 1)
+            y += random.randrange(-1, 1)
+
+            x += x_direction
+            y += y_direction
+
+            if tilemap[x * size + y] == 0:
+                print "river created"
+                break
+
+            for m in range(-1, 1):
+                for n in range(-1, 1):
+                    tilemap[(x + m) * size + y + n] = 3
+
+        '''
         water_tile = 0
         x_direction = 0
         y_direction = 0
@@ -371,18 +435,6 @@ def create_rivers(tilemap):
                         # distance = math.sqrt((x - m) ** 2 + (y - n) ** 2)
                         # if distance <= extra_size:
                         if tilemap[(x + m) * size + y + n] == 0:
-                            '''
-                            if x > m+x:
-                                x_direction = -1
-                            else:
-                                x_direction = 1
-
-                            if y > n+y:
-                                y_direction = -1
-                            else:
-                                y_direction = 1
-                            '''
-
                             x_distance = math.fabs(x - (m + x))
                             y_distance = math.fabs(y - (n + y))
 
@@ -436,6 +488,7 @@ def create_rivers(tilemap):
 
             # update_text = "creating river: " + str(to_percent(river_num / (i + 1))) + "%%"
             # info_text.set(update_text)
+        '''
 
 
 def create_tilemap_image(tilemap):
@@ -462,6 +515,7 @@ def create_tilemap_image(tilemap):
     # update_text = "terrain generation finished"
     # info_text.set(update_text)
 
+
 def generate_biomes(tilemap):
     print "generating biomes"
     # def generate_biomes(size):
@@ -473,6 +527,7 @@ def generate_biomes(tilemap):
     ny = []
     nt = []
     biome_id = 0
+
     for i in range(24):
         rx = random.randrange(size / 2)
         ry = random.randrange(size / 2)
@@ -492,7 +547,7 @@ def generate_biomes(tilemap):
             dmin = math.hypot(size - 1, size - 1)
             j = -1
             for i in range(24):
-                d = math.hypot(nx[i] - x, ny[i] - y) + math.fabs(nx[i] - x) + math.fabs(ny[i] - y)
+                d = math.floor(math.fabs(nx[i] - x) + math.fabs(ny[i] - y) + 1)
                 if d < dmin:
                     dmin = d
                     j = i
@@ -513,7 +568,6 @@ def generate_biomes(tilemap):
                 new_value = text.split(",")
 
                 tilemap[x * size + y] = int(new_value[0])
-
 
     print "generating buildings"
     # buildings
@@ -567,27 +621,27 @@ def generate_biomes(tilemap):
                         char = file.read(1)
                         if not char: break
                         if char == "#":
-                            tilemap[(x + row)*size + y + line] = 7
+                            tilemap[(x + row) * size + y + line] = 7
                         if char == "|":
-                            tilemap[(x + row)*size + y + line] = 8
+                            tilemap[(x + row) * size + y + line] = 8
                         if char == ".":
-                            tilemap[(x + row)*size + y + line] = 9
+                            tilemap[(x + row) * size + y + line] = 9
                         if char == "~":
-                            tilemap[(x + row)*size + y + line] = 3
+                            tilemap[(x + row) * size + y + line] = 3
                         row += row_increaser
                         if char == "\n":
                             row = row_reset
                             line += line_increaser
                     file.close()
 
-        #update_text = "adding buildings: " + str(to_percent((x * 1.0) / (size - 28))) + "%%"
-        #info_text.set(update_text)
+                    # update_text = "adding buildings: " + str(to_percent((x * 1.0) / (size - 28))) + "%%"
+                    # info_text.set(update_text)
 
     print "creating swamps"
     # swamp lakes
     for x in range(8, size - 8):
         for y in range(8, size - 8):
-            tech_value = tilemap[x*size + y]
+            tech_value = tilemap[x * size + y]
             special_value = biomemap[x / 2][y / 2]
             if (tech_value == 12) and special_value == 3:
                 r = random.randrange(POND_PROBABILITY)
@@ -599,112 +653,112 @@ def generate_biomes(tilemap):
                             if distance <= lake_size:
                                 r = random.randrange(6)
                                 if not r == 0:
-                                    tilemap[(x + m)*size + y + n] = 3
+                                    tilemap[(x + m) * size + y + n] = 3
 
-        #update_text = "adding ponds: " + str(to_percent((x * 1.0) / (size - 16))) + "%%"
-        #info_text.set(update_text)
+                                    # update_text = "adding ponds: " + str(to_percent((x * 1.0) / (size - 16))) + "%%"
+                                    # info_text.set(update_text)
 
     print "placing trees"
     # generate objects
     # trees
     for x in range(size):
         for y in range(size):
-            value = tilemap[x*size + y]
+            value = tilemap[x * size + y]
             if value == 2:
                 r = random.randrange(TREE_PROBABILITY_PLAIN)
                 if r == 0:
-                    tilemap[x*size + y] = 6
+                    tilemap[x * size + y] = 6
             if value == 4 or value == 12:
                 r = random.randrange(TREE_PROBABILITY_FOREST)
                 if r == 0:
-                    tilemap[x*size + y] = 6
+                    tilemap[x * size + y] = 6
             if value == 5:
                 r = random.randrange(TREE_PROBABILITY_JUNGLE)
                 if r == 0:
-                    tilemap[x*size + y] = 6
+                    tilemap[x * size + y] = 6
             # mushroom
             if value == 10:
                 r = random.randrange(MUSHROOM_PROBABILITY)
                 if r <= 4:
-                    tilemap[x*size + y] = 11
+                    tilemap[x * size + y] = 11
 
             # beach/desert
             if value == 1:
                 r = random.randrange(TREE_PROBABILITY_BEACH)
                 if r == 0:
-                    tilemap[x*size + y] = 13
+                    tilemap[x * size + y] = 13
 
-        #update_text = "adding trees: " + str(to_percent((x * 1.0) / size)) + "%%"
-        #info_text.set(update_text)
+                    # update_text = "adding trees: " + str(to_percent((x * 1.0) / size)) + "%%"
+                    # info_text.set(update_text)
 
     print "creating mushrooms"
     # cellular for mushroom
     for i in range(MUSHROOM_CELLULAR_ITERATIONS):
         for x in range(1, size - 1):
             for y in range(1, size - 1):
-                value = tilemap[x*size + y]
+                value = tilemap[x * size + y]
                 trees_around = 0
                 # if mushroom
                 if value == 11:
-                    if tilemap[(x + 1)*size + y] == 11:
+                    if tilemap[(x + 1) * size + y] == 11:
                         trees_around += 1
-                    if tilemap[(x - 1)*size + y] == 11:
+                    if tilemap[(x - 1) * size + y] == 11:
                         trees_around += 1
-                    if tilemap[x*size+ y + 1] == 11:
+                    if tilemap[x * size + y + 1] == 11:
                         trees_around += 1
-                    if tilemap[x*size + y - 1] == 11:
+                    if tilemap[x * size + y - 1] == 11:
                         trees_around += 1
 
-                    if tilemap[(x + 1)*size + y + 1] == 11:
+                    if tilemap[(x + 1) * size + y + 1] == 11:
                         trees_around += 1
-                    if tilemap[(x + 1)*size + y - 1] == 11:
+                    if tilemap[(x + 1) * size + y - 1] == 11:
                         trees_around += 1
-                    if tilemap[(x - 1)*size + y + 1] == 11:
+                    if tilemap[(x - 1) * size + y + 1] == 11:
                         trees_around += 1
-                    if tilemap[(x - 1)*size + y - 1] == 11:
+                    if tilemap[(x - 1) * size + y - 1] == 11:
                         trees_around += 1
 
                     if trees_around < 4:
-                        tilemap[x*size + y] = 10
+                        tilemap[x * size + y] = 10
 
                 # if no mushroom
                 if value == 10:
-                    if tilemap[(x + 1)*size + y] == 11:
+                    if tilemap[(x + 1) * size + y] == 11:
                         trees_around += 1
-                    if tilemap[(x - 1)*size + y] == 11:
+                    if tilemap[(x - 1) * size + y] == 11:
                         trees_around += 1
-                    if tilemap[x*size + y + 1] == 11:
+                    if tilemap[x * size + y + 1] == 11:
                         trees_around += 1
-                    if tilemap[x*size + y - 1] == 11:
+                    if tilemap[x * size + y - 1] == 11:
                         trees_around += 1
 
-                    if tilemap[(x + 1)*size + y + 1] == 11:
+                    if tilemap[(x + 1) * size + y + 1] == 11:
                         trees_around += 1
-                    if tilemap[(x + 1)*size + y - 1] == 11:
+                    if tilemap[(x + 1) * size + y - 1] == 11:
                         trees_around += 1
-                    if tilemap[(x - 1)*size + y + 1] == 11:
+                    if tilemap[(x - 1) * size + y + 1] == 11:
                         trees_around += 1
-                    if tilemap[(x - 1)*size + y - 1] == 11:
+                    if tilemap[(x - 1) * size + y - 1] == 11:
                         trees_around += 1
 
                     if trees_around >= 5:
-                        tilemap[x*size + y] = 11
+                        tilemap[x * size + y] = 11
 
-            #update_text = "coalescing mushrooms: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
-            #info_text.set(update_text)
+                        # update_text = "coalescing mushrooms: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
+                        # info_text.set(update_text)
 
     print "creating castle"
     # castle for burned biome
     for x in range(1, size - 1, 8):
         for y in range(1, size - 1, 8):
-            value = tilemap[x*size + y]
+            value = tilemap[x * size + y]
             # if burned ground
             if value == 14:
                 # check if space to build
                 free = 1
                 for m in range(8):
                     for n in range(8):
-                        if not tilemap[(x + m)*size + y + n] == 14 and not tilemap[(x + m)*size + y + n] == 3:
+                        if not tilemap[(x + m) * size + y + n] == 14 and not tilemap[(x + m) * size + y + n] == 3:
                             free = 0
 
                 if free == 0:
@@ -719,33 +773,33 @@ def generate_biomes(tilemap):
                 while 1:
                     char = file.read(1)
                     if not char: break
-                    if not tilemap[(x + row)*size + y + line] == 3:
+                    if not tilemap[(x + row) * size + y + line] == 3:
                         if char == "#":
-                            tilemap[(x + row)*size + y + line] = 7
+                            tilemap[(x + row) * size + y + line] = 7
                         if char == "|":
-                            tilemap[(x + row)*size + y + line] = 8
+                            tilemap[(x + row) * size + y + line] = 8
                         if char == ".":
-                            tilemap[(x + row)*size + y + line] = 9
+                            tilemap[(x + row) * size + y + line] = 9
                         if char == "~":
-                            tilemap[(x + row)*size + y + line] = 3
+                            tilemap[(x + row) * size + y + line] = 3
                         if char == " ":
-                            tilemap[(x + row)*size + y + line] = 14
+                            tilemap[(x + row) * size + y + line] = 14
                         if char == "%":
-                            tilemap[(x + row)*size + y + line] = 15
+                            tilemap[(x + row) * size + y + line] = 15
                     row += 1
                     if char == "\n":
                         row = 0
                         line += 1
                 file.close()
 
-        #update_text = "building up strongholds: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
-        #info_text.set(update_text)
+                # update_text = "building up strongholds: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
+                # info_text.set(update_text)
 
     print "creating honeycombs"
     # honeycombs for bees
     for x in range(1, size - 26, 25):
         for y in range(1, size - 26, 10):
-            value = tilemap[x*size + y]
+            value = tilemap[x * size + y]
             # if honey ground
             if 1:  # value == 16 or value == 17:
 
@@ -757,11 +811,11 @@ def generate_biomes(tilemap):
                 while 1:
                     char = file.read(1)
                     if not char: break
-                    if tilemap[(x + row)*size + y + line] == 16:
+                    if tilemap[(x + row) * size + y + line] == 16:
                         if char == "#":
                             r = random.randrange(7)
                             if not r == 0:
-                                tilemap[(x + row)*size + y + line] = 17
+                                tilemap[(x + row) * size + y + line] = 17
                     row += 1
                     if char == "\n":
                         row = 0
@@ -771,7 +825,7 @@ def generate_biomes(tilemap):
     # honeycombs for bees
     for x in range(13, size - 26, 25):
         for y in range(6, size - 26, 10):
-            value = tilemap[x*size + y]
+            value = tilemap[x * size + y]
             # if honey ground
             if 1:  # value == 16:
 
@@ -783,39 +837,40 @@ def generate_biomes(tilemap):
                 while 1:
                     char = file.read(1)
                     if not char: break
-                    if tilemap[(x + row)*size + y + line] == 16:
+                    if tilemap[(x + row) * size + y + line] == 16:
                         if char == "#":
                             r = random.randrange(7)
                             if not r == 0:
-                                tilemap[(x + row)*size + y + line] = 17
+                                tilemap[(x + row) * size + y + line] = 17
                     row += 1
                     if char == "\n":
                         row = 0
                         line += 1
                 file.close()
 
-        #update_text = "creating honeycombs: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
-        #info_text.set(update_text)
+                # update_text = "creating honeycombs: " + str(to_percent((x * 1.0) / (size - 2))) + "%%"
+                # info_text.set(update_text)
 
     print "removing walls"
     # remove invisible walls
     wall_counter = 0
     for x in range(1, size - 1):
         for y in range(1, size - 1):
-            value = tilemap[x*size + y]
+            value = tilemap[x * size + y]
             # if invisible wall
             if value == 15:
-                if tilemap[(x + 1)*size + y] == 15 and tilemap[(x + 1)*size + y + 1] == 15 and tilemap[x*size + y + 1] == 15:
-                    tilemap[x*size + y] = 9
-                    tilemap[(x + 1)*size + y] = 9
-                    tilemap[x*size + y + 1] = 9
-                    tilemap[(x + 1)*size + y + 1] = 9
+                if tilemap[(x + 1) * size + y] == 15 and tilemap[(x + 1) * size + y + 1] == 15 and tilemap[
+                                            x * size + y + 1] == 15:
+                    tilemap[x * size + y] = 9
+                    tilemap[(x + 1) * size + y] = 9
+                    tilemap[x * size + y + 1] = 9
+                    tilemap[(x + 1) * size + y + 1] = 9
                 else:
                     if wall_counter < 10:
-                        tilemap[x*size + y] = 7
+                        tilemap[x * size + y] = 7
                         wall_counter += 1
                     else:
-                        tilemap[x*size + y] = 9
+                        tilemap[x * size + y] = 9
                         wall_counter = 0
 
 
@@ -853,7 +908,7 @@ def generate_biomes(tilemap):
         mycsv = list(mycsv)
         for x in range(size):
             for y in range(size):
-                value = tilemap[x*size + y]
+                value = tilemap[x * size + y]
                 red = int(mycsv[value + 1][3])
                 green = int(mycsv[value + 1][4])
                 blue = int(mycsv[value + 1][5])
@@ -862,11 +917,11 @@ def generate_biomes(tilemap):
 
     img.save('complete_map.png')
 
-    #update_text = "complete generation finished"
-    #info_text.set(update_text)
+    # update_text = "complete generation finished"
+    # info_text.set(update_text)
 
-    #update_text = "saving world finished"
-    #info_text.set(update_text)
+    # update_text = "saving world finished"
+    # info_text.set(update_text)
 
     print "finished"
 
@@ -885,36 +940,18 @@ def to_percent(value):
 
 def write_map_file(size, map, time):
     version = "0.1"
-    version_string = "~[version:"+version+"]"
-    size_string = "~[size:"+str(size)+"]"
-    time_string = "~[time:"+str(time)+"]"
+    version_string = "~[version:" + version + "]"
+    size_string = "~[size:" + str(size) + "]"
+    time_string = "~[time:" + str(time) + "]"
 
-    with open("save.bin", "wb") as savefile:
-        savefile.seek(0)
-        savefile.truncate()
-        savefile.write(version_string+size_string+time_string)
-        for x in range(size):
-            for y in range(0, size):
-                format = "c"
-                savefile.write(struct.pack(format, chr(map[x*size + y])))
-
-    with open("save.txt", "w") as savefile:
-        savefile.seek(0)
-        savefile.truncate()
-        savefile.write(version_string+size_string+time_string)
-        for x in range(size):
-            for y in range(size):
-                savefile.write(str(map[x*size + y]) + ",")
-            savefile.write("\n")
-
-    with open("save_zip.bin", "wb") as savefile:
+    with open("world.sav", "wb") as savefile:
         savefile.seek(0)
         savefile.truncate()
         data = ""
-        data += (version_string+size_string+time_string)
+        data += (version_string + size_string + time_string)
         for x in range(size):
             for y in range(0, size):
                 format = "c"
-                data += struct.pack(format, chr(map[x*size + y]))
+                data += struct.pack(format, chr(map[x * size + y]))
         compressed = zlib.compress(data, 9)
         savefile.write(compressed)
