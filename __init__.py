@@ -7,6 +7,7 @@ from multiprocessing import Value
 import thread
 import loader
 import csv
+import random
 
 # actual size of the window
 SCREEN_WIDTH = 160
@@ -24,15 +25,9 @@ FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
 
-game_status = 1
+game_status = 1 # 0 = generator, 1 = game, 2 = menu
 
 shared_percent = Value(c_int)
-
-color_dark_wall = libtcod.Color(255, 0, 0)
-color_light_wall = libtcod.Color(130, 110, 50)
-color_dark_ground = libtcod.Color(50, 50, 150)
-color_light_ground = libtcod.Color(200, 180, 50)
-
 
 class Info_text:
     def __init__(self, value):
@@ -85,13 +80,12 @@ def update_visual_map():
 
             if map_x < size and map_y < size:
                 visual[x][y] = map[map_x * size + map_y]
-                print map[map_x * size + map_y]
 
 def make_visual_map():
 
     # fill map with "unblocked" tiles
     global visual
-    visual = [[tiles.Tile(0,'?', 0, 0,"debug")
+    visual = [[tiles.Tile(0,'?', 0, 0,"debug","")
                for y in range(VISUAL_HEIGHT)]
               for x in range(VISUAL_WIDTH)]
 
@@ -104,11 +98,19 @@ def render_all():
 
     print visual
 
-    # go through all tiles, and set their background color
+    # go through all tiles, and set their color
     for y in range(VISUAL_HEIGHT):
         for x in range(VISUAL_WIDTH):
             id = visual[x][y]
-            libtcod.console_set_default_foreground(con, getattr(color, tile_list[id].color))
+
+            tile_color = tile_list[id].color
+            # animate if two colors
+            if tile_list[id].animation_color != "":
+                r = random.randrange(2)
+                if r >= 1:
+                    tile_color = tile_list[id].animation_color
+
+            libtcod.console_set_default_foreground(con, getattr(color, tile_color))
             libtcod.console_put_char(con, x, y, tile_list[id].char, libtcod.BKGND_NONE)
 
     # draw all objects in the list
@@ -156,8 +158,9 @@ def load_tiles():
         behavior = int(mycsv[value + 1][6])
         sight_block = int(mycsv[value + 1][7])
         color = mycsv[value + 1][8]
+        animation_color = mycsv[value + 1][9]
 
-        tile = tiles.Tile(name,char,behavior,sight_block,color)
+        tile = tiles.Tile(name,char,behavior,sight_block,color,animation_color)
         tile_list.append(tile)
 
 

@@ -1,21 +1,21 @@
-ID;NAME;CHAR;R (only Image);G (only Image);B (only Image);BEHAVIOR;SIGHT BLOCK;COLOR
-0;water(sea);~;0;0;127;2;0;blue
-1;sand;;255;255;0;1;0;
-2;grass(small);";";0;255;0;1;0;green
-3;water(river);~;0;0;255;2;0;blue
-4;grass(medium);;0;200;0;1;0;
-5;grass(tall);;0;127;0;1;0;
-6;tree;!;100;50;0;0;1;
-7;wall;;0;0;0;0;1;gray
-8;door;|;63;63;63;1;1;white
-9;floor;;255;255;255;1;0;silver
-10;mycelium;;200;150;200;1;0;
-11;fungus;;200;100;100;0;1;
-12;grass(swamp);;75;200;0;1;0;
-13;palm;;0;100;0;0;1;
-14;burned ground;;120;0;0;1;0;
-15;invisible wall;;0;255;255;1;0;
-16;grass (honey);;255;100;0;1;0;
-17;tree (honey);;120;20;0;0;1;
-18;ice;;120;160;210;1;0;
-19;water(river frozen);;100;140;190;1;0;
+ID;NAME;CHAR;R (only Image);G (only Image);B (only Image);BEHAVIOR;SIGHT BLOCK;COLORS;COLORS ANIMATION
+0;water(sea);~;0;0;127;2;0;blue;navy
+1;sand;;255;255;0;1;0;yellow;
+2;grass(small);";";0;255;0;1;0;lime;
+3;water(river);~;0;0;255;2;0;blue;navy
+4;grass(medium);";";0;200;0;1;0;lime;
+5;grass(tall);";";0;127;0;1;0;lime;
+6;tree;!;100;50;0;0;1;green;
+7;wall;;0;0;0;0;1;gray;
+8;door;|;63;63;63;1;1;white;
+9;floor;;255;255;255;1;0;white;
+10;mycelium;;200;150;200;1;0;purple;
+11;fungus;;200;100;100;0;1;maroon;
+12;grass(swamp);;75;200;0;1;0;lime;
+13;palm;;0;100;0;0;1;green;
+14;burned ground;;120;0;0;1;0;maroon;
+15;invisible wall;;0;255;255;1;0;debug;
+16;grass (honey);";";255;100;0;1;0;yellow;
+17;tree (honey);;120;20;0;0;1;olive;
+18;ice;;120;160;210;1;0;aqua;
+19;water(river frozen);;100;140;190;1;0;aqua;
