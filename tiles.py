@@ -1,9 +1,15 @@
 class Tile:
     # a tile of the map and its properties
-    def __init__(self,id, blocked, block_sight=None):
-        self.blocked = blocked
+    def __init__(self,id,char, behavior, sight_blocked,color):
         self.id = id
+        self.char = char
+        self.behavior = behavior
+        self.sight_blocked = sight_blocked
+        self.color = color
 
-        # by default, if a tile is blocked, it also blocks sight
-        if block_sight is None: block_sight = blocked
-        self.block_sight = block_sight
+        if self.char == '':
+            self.char = '?'
+
+        if self.color == "":
+            self.color = "debug"
+

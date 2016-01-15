@@ -6,6 +6,7 @@ from ctypes import c_int
 from multiprocessing import Value
 import thread
 import loader
+import csv
 
 # actual size of the window
 SCREEN_WIDTH = 160
@@ -55,7 +56,7 @@ class Object:
 
     def move(self, dx, dy):
         # move by the given amount, if the destination is not blocked
-        #if not map[(self.x + dx) * MAP_SIZE + self.y + dy]: #if not blocked
+        if tile_list[map[(self.x + dx) * MAP_SIZE + self.y + dy]].behavior == 1:
             self.x += dx
             self.y += dy
 
@@ -90,7 +91,7 @@ def make_visual_map():
 
     # fill map with "unblocked" tiles
     global visual
-    visual = [[tiles.Tile(0, False)
+    visual = [[tiles.Tile(0,'?', 0, 0,"debug")
                for y in range(VISUAL_HEIGHT)]
               for x in range(VISUAL_WIDTH)]
 
@@ -107,30 +108,8 @@ def render_all():
     for y in range(VISUAL_HEIGHT):
         for x in range(VISUAL_WIDTH):
             id = visual[x][y]
-            if id == 0:
-                # libtcod.console_set_char_background(con, x, y, color_dark_wall,libtcod.BKGND_SET)
-                random = libtcod.random_get_int(0, 0, 1)
-                if random == 0:
-                    libtcod.console_set_default_foreground(con, color.blue)
-                else:
-                    libtcod.console_set_default_foreground(con, color.navy)
-                libtcod.console_put_char(con, x, y, '~', libtcod.BKGND_NONE)
-            if id == 2:
-                # libtcod.console_set_char_background(con, x, y, color_dark_ground, libtcod.BKGND_SET)
-                # if math.sin(x%(y+1)):
-                libtcod.console_set_default_foreground(con, color.green)
-                # else:
-                # libtcod.console_set_default_foreground(con, color.lime)
-                libtcod.console_put_char(con, x, y, ',', libtcod.BKGND_NONE)
-            if id == 1:
-                libtcod.console_set_default_foreground(con, color.yellow)
-                libtcod.console_put_char(con, x, y, '#', libtcod.BKGND_NONE)
-            if id == 3:
-                libtcod.console_set_default_foreground(con, color.navy)
-                libtcod.console_put_char(con, x, y, '~', libtcod.BKGND_NONE)
-            else:
-                libtcod.console_set_default_foreground(con, color.white)
-                libtcod.console_put_char(con, x, y, '?', libtcod.BKGND_NONE)
+            libtcod.console_set_default_foreground(con, getattr(color, tile_list[id].color))
+            libtcod.console_put_char(con, x, y, tile_list[id].char, libtcod.BKGND_NONE)
 
     # draw all objects in the list
     for object in objects:
@@ -166,6 +145,22 @@ def handle_keys():
     elif libtcod.console_is_key_pressed(libtcod.KEY_RIGHT):
         player.move(1, 0)
 
+def load_tiles():
+    with open("data/configurations/tiles.csv", 'rb') as f:
+        mycsv = csv.reader(f, delimiter=';')
+        mycsv = list(mycsv)
+
+    for value in range(len(mycsv)-1):
+        name = mycsv[value + 1][1]
+        char = mycsv[value + 1][2]
+        behavior = int(mycsv[value + 1][6])
+        sight_block = int(mycsv[value + 1][7])
+        color = mycsv[value + 1][8]
+
+        tile = tiles.Tile(name,char,behavior,sight_block,color)
+        tile_list.append(tile)
+
+
 
 def update_info(text):
     middle = SCREEN_WIDTH / 2 - len(text) / 2
@@ -182,12 +177,15 @@ libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'ASCII Adventure', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 global map
+global tile_list
+tile_list = []
 
 if game_status == 0:
     info_text = Info_text("                                                                              ")
     generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
 
 if game_status == 1:
+    load_tiles()
     map = loader.load_map()
     # create object representing the player
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', libtcod.white)
