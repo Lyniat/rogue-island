@@ -1,6 +1,6 @@
 class Tile:
     # a tile of the map and its properties
-    def __init__(self,id,char, behavior, sight_blocked,color,animation_color):
+    def __init__(self, id, char, behavior, sight_blocked, color, animation_color):
         self.id = id
         self.char = char
         self.behavior = behavior
@@ -13,4 +13,3 @@ class Tile:
 
         if self.color == "":
             self.color = "debug"
-

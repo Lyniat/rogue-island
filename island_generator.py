@@ -547,7 +547,7 @@ def generate_biomes(tilemap):
             dmin = math.hypot(size - 1, size - 1)
             j = -1
             for i in range(24):
-                d = math.floor(math.fabs(nx[i] - x) + math.fabs(ny[i] - y) + 1)
+                d = math.sqrt((nx[i] - x)**2 + (ny[i] - y)**2)#math.floor(math.fabs(nx[i] - x) + math.fabs(ny[i] - y) + 1)
                 if d < dmin:
                     dmin = d
                     j = i

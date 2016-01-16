@@ -10,14 +10,18 @@ import csv
 import random
 
 # actual size of the window
-SCREEN_WIDTH = 160
-SCREEN_HEIGHT = 100
+SCREEN_WIDTH = 90
+SCREEN_HEIGHT = 65
+
+FONT_SIZE = 12  # 8 = small, 12 = normal, 16 = big
 
 # size of the map
 MAP_SIZE = 512
 
-VISUAL_WIDTH = 150
-VISUAL_HEIGHT = 90
+VISUAL_WIDTH = 75
+VISUAL_HEIGHT = 55
+VISUAL_WIDTH_OFFSET = 0
+VISUAL_HEIGHT_OFFSET = 1
 
 LIMIT_FPS = 120  # 120 frames-per-second maximum (for testing)
 
@@ -25,9 +29,10 @@ FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
 
-game_status = 1 # 0 = generator, 1 = game, 2 = menu
+game_status = 1  # 0 = generator, 1 = game, 2 = menu
 
 shared_percent = Value(c_int)
+
 
 class Info_text:
     def __init__(self, value):
@@ -68,7 +73,8 @@ class Object:
 class Player(Object):
     def draw(self):
         libtcod.console_set_default_foreground(con, self.color)
-        libtcod.console_put_char(con, VISUAL_WIDTH / 2, VISUAL_HEIGHT / 2, self.char, libtcod.BKGND_NONE)
+        libtcod.console_put_char(con, VISUAL_WIDTH / 2 + VISUAL_WIDTH_OFFSET, VISUAL_HEIGHT / 2 + VISUAL_HEIGHT_OFFSET,
+                                 self.char, libtcod.BKGND_NONE)
 
 
 def update_visual_map():
@@ -81,11 +87,11 @@ def update_visual_map():
             if map_x < size and map_y < size:
                 visual[x][y] = map[map_x * size + map_y]
 
-def make_visual_map():
 
+def make_visual_map():
     # fill map with "unblocked" tiles
     global visual
-    visual = [[tiles.Tile(0,'?', 0, 0,"debug","")
+    visual = [[tiles.Tile(0, '?', 0, 0, "debug", "")
                for y in range(VISUAL_HEIGHT)]
               for x in range(VISUAL_WIDTH)]
 
@@ -111,7 +117,8 @@ def render_all():
                     tile_color = tile_list[id].animation_color
 
             libtcod.console_set_default_foreground(con, getattr(color, tile_color))
-            libtcod.console_put_char(con, x, y, tile_list[id].char, libtcod.BKGND_NONE)
+            libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET, tile_list[id].char,
+                                     libtcod.BKGND_NONE)
 
     # draw all objects in the list
     for object in objects:
@@ -147,12 +154,13 @@ def handle_keys():
     elif libtcod.console_is_key_pressed(libtcod.KEY_RIGHT):
         player.move(1, 0)
 
+
 def load_tiles():
     with open("data/configurations/tiles.csv", 'rb') as f:
         mycsv = csv.reader(f, delimiter=';')
         mycsv = list(mycsv)
 
-    for value in range(len(mycsv)-1):
+    for value in range(len(mycsv) - 1):
         name = mycsv[value + 1][1]
         char = mycsv[value + 1][2]
         behavior = int(mycsv[value + 1][6])
@@ -160,9 +168,8 @@ def load_tiles():
         color = mycsv[value + 1][8]
         animation_color = mycsv[value + 1][9]
 
-        tile = tiles.Tile(name,char,behavior,sight_block,color,animation_color)
+        tile = tiles.Tile(name, char, behavior, sight_block, color, animation_color)
         tile_list.append(tile)
-
 
 
 def update_info(text):
@@ -175,7 +182,8 @@ def update_info(text):
 # Initialization & Main Loop
 #############################################
 
-libtcod.console_set_custom_font('terminal8x8_gs_as.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INCOL)
+libtcod.console_set_custom_font('data/fonts/terminal' + str(FONT_SIZE) + 'x' + str(FONT_SIZE) + '_gs_ro.png',
+                                libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'ASCII Adventure', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -214,6 +222,10 @@ while not libtcod.console_is_window_closed():
         # erase all objects at their old locations, before they move
         for object in objects:
             object.clear()
+
+        ###########################
+        # DRAW INTERFACE HERE
+        ###########################
 
         # handle keys and exit game if needed
         exit = handle_keys()

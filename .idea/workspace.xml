@@ -2,13 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="14299c95-0ef5-4537-b148-b2ae71489315" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/terminal8x8_gs_as.png" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/biome_map.png" afterPath="$PROJECT_DIR$/biome_map.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/complete_map.png" afterPath="$PROJECT_DIR$/complete_map.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tile_map.png" afterPath="$PROJECT_DIR$/tile_map.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/world.sav" afterPath="$PROJECT_DIR$/world.sav" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/__init__.py" afterPath="$PROJECT_DIR$/__init__.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/color.py" afterPath="$PROJECT_DIR$/color.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/configurations/tiles.csv" afterPath="$PROJECT_DIR$/data/configurations/tiles.csv" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/island_generator.py" afterPath="$PROJECT_DIR$/island_generator.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tiles.py" afterPath="$PROJECT_DIR$/tiles.py" />
     </list>
     <ignored path="ascii_adventure.iws" />
@@ -33,8 +35,8 @@
       <file leaf-file-name="__init__.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-6.6271186">
-              <caret line="27" column="15" selection-start-line="27" selection-start-column="15" selection-end-line="27" selection-end-column="15" />
+            <state vertical-scroll-proportion="0.684">
+              <caret line="31" column="15" selection-start-line="31" selection-start-column="15" selection-end-line="31" selection-end-column="15" />
               <folding>
                 <element signature="e#0#27#0" expanded="true" />
               </folding>
@@ -114,8 +116,8 @@
       <file leaf-file-name="island_generator.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/island_generator.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-5.607143">
-              <caret line="283" column="38" selection-start-line="283" selection-start-column="32" selection-end-line="283" selection-end-column="38" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="549" column="61" selection-start-line="549" selection-start-column="61" selection-end-line="549" selection-end-column="61" />
               <folding>
                 <element signature="e#0#13#0" expanded="true" />
               </folding>
@@ -149,10 +151,10 @@
         <option value="$PROJECT_DIR$/PerlinNoise.py" />
         <option value="$PROJECT_DIR$/opensimplex.py" />
         <option value="$PROJECT_DIR$/loader.py" />
-        <option value="$PROJECT_DIR$/island_generator.py" />
         <option value="$PROJECT_DIR$/color.py" />
         <option value="$PROJECT_DIR$/data/configurations/tiles.csv" />
         <option value="$PROJECT_DIR$/tiles.py" />
+        <option value="$PROJECT_DIR$/island_generator.py" />
         <option value="$PROJECT_DIR$/__init__.py" />
       </list>
     </option>
@@ -189,6 +191,7 @@
     </navigator>
     <panes>
       <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -241,7 +244,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -838,22 +840,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="19" column="45" selection-start-line="19" selection-start-column="45" selection-end-line="19" selection-end-column="45" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/terminal8x8_gs_as.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/island_generator.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-5.607143">
-          <caret line="283" column="38" selection-start-line="283" selection-start-column="32" selection-end-line="283" selection-end-column="38" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -861,14 +847,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="750" column="0" selection-start-line="750" selection-start-column="0" selection-end-line="750" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/opensimplex.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="170" column="54" selection-start-line="170" selection-start-column="43" selection-end-line="170" selection-end-column="54" />
           <folding />
         </state>
       </provider>
@@ -904,6 +882,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/opensimplex.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="170" column="54" selection-start-line="170" selection-start-column="43" selection-end-line="170" selection-end-column="54" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/tiles.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -912,10 +898,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/island_generator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="549" column="61" selection-start-line="549" selection-start-column="61" selection-end-line="549" selection-end-column="61" />
+          <folding>
+            <element signature="e#0#13#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-6.6271186">
-          <caret line="27" column="15" selection-start-line="27" selection-start-column="15" selection-end-line="27" selection-end-column="15" />
+        <state vertical-scroll-proportion="0.684">
+          <caret line="31" column="15" selection-start-line="31" selection-start-column="15" selection-end-line="31" selection-end-column="15" />
           <folding>
             <element signature="e#0#27#0" expanded="true" />
           </folding>
