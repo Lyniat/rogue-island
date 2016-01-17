@@ -13,7 +13,6 @@ import nonplayercharacter
 import playercharacter
 import tiles
 
-
 # actual size of the window
 SCREEN_WIDTH = 90
 SCREEN_HEIGHT = 65
@@ -33,6 +32,7 @@ LIMIT_FPS = 120  # 120 frames-per-second maximum (for testing)
 FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
+MAX_MONSTERS = 20;
 
 game_status = 1  # 0 = generator, 1 = game, 2 = menu
 
@@ -143,27 +143,40 @@ def attackmove(dx, dy):
 
 
 def place_objects():
-    num_monsters = 1
-    while len(objects) <= num_monsters:
+    while len(objects) <= MAX_MONSTERS:
+        r = random.randrange(4)
+        if r < 1:
+            x = player.x + VISUAL_WIDTH + 5
+            y = player.y + VISUAL_HEIGHT + random.randrange(-10, 10)
 
-        # x = player.x + libtcod.random_get_int(0, -5, 5)
-        # y = player.y + libtcod.random_get_int(0, -5, 5)
-        y = player.y + 1
-        x = player.x + 1
+        elif 1 <= r < 2:
+            x = player.x - VISUAL_WIDTH - 5
+            y = player.y + VISUAL_HEIGHT + random.randrange(-10, 10)
+        elif 2 <= r < 3:
+            x = player.x + VISUAL_WIDTH + random.randrange(-10, 10)
+            y = player.y + VISUAL_HEIGHT + 5
+
+        elif 3 <= r < 4:
+            x = player.x + VISUAL_WIDTH + random.randrange(-10, 10)
+            y = player.y - VISUAL_HEIGHT - 5
+
         if not is_blocked(x, y):
-            if libtcod.random_get_int(0, 0, 100) < 80:  # 80% chance of getting an orc
+            if random.randrange(100) < 60:  # 60% chance of getting an orc
                 # create an orc
-                monsterentity = nonplayercharacter.monster(hp=10, agility=4, strength=6, intelligence=3, level=1, on_death=monster_death)
+                monsterentity = nonplayercharacter.monster(hp=10, agility=4, strength=6, intelligence=3, level=1,
+                                                           on_death=monster_death)
                 ai = monsterAi()
                 monster = Object(x, y, 'O', 'orc', libtcod.desaturated_green,
                                  blocks=True, entclass=monsterentity, ai=ai)
             else:
                 # create a troll
-                monsterentity = nonplayercharacter.monster(hp=15, agility=6, strength=5, intelligence=4, level=2, on_death=monster_death)
+                monsterentity = nonplayercharacter.monster(hp=15, agility=6, strength=5, intelligence=4, level=2,
+                                                           on_death=monster_death)
                 ai = monsterAi()
                 monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
                                  blocks=True, entclass=monsterentity, ai=ai)
             objects.append(monster)
+
 
 class monsterAi():
     def take_turn(self):
@@ -172,7 +185,6 @@ class monsterAi():
             monster.move_towards(player.x, player.y)
         elif player.entclass.hp > 0:
             monster.entclass.attack(player)
-
 
 
 def update_visual_map():
@@ -228,10 +240,12 @@ def render_all():
     # blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
+
 def game_over(player):
     print 'You died!'
     player.char = '%'
     player.color = libtcod.dark_red
+
 
 def monster_death(monster):
     print monster.name.capitalize() + ' is dead!'
@@ -268,7 +282,7 @@ def handle_keys():
         attackmove(1, 0)
 
     else:
-            return 'player_pass'
+        return 'player_pass'
 
 
 def load_tiles():
@@ -350,7 +364,7 @@ while not libtcod.console_is_window_closed():
         # handle keys and exit game if needed
         exit = handle_keys()
 
-        if game_status == 1  and player_action != 'player_pass':
+        if game_status == 1 and player_action != 'player_pass':
             for object in objects:
                 if object.ai:
                     object.ai.take_turn()
