@@ -225,7 +225,7 @@ def render_all():
                     tile_color = tile_list[id].animation_color
 
             libtcod.console_set_default_foreground(con, getattr(color, tile_color))
-            libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET, tile_list[id].char,
+            libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET, int(tile_list[id].char),
                                      libtcod.BKGND_NONE)
 
     # draw all objects in the list
