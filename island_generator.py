@@ -11,6 +11,7 @@ import multiprocessing
 from ctypes import c_int
 import time
 
+multiprocessing.freeze_support()
 shared_var = Value(c_int)
 shared_tilemap = None
 
