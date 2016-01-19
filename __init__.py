@@ -27,9 +27,9 @@ LIMIT_FPS = 120  # 120 frames-per-second maximum (for testing)
 FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
-MAX_MONSTERS = 20;
+MAX_MONSTERS = 20
 
-game_status = 0  # 0 = generator, 1 = game, 2 = menu
+game_status = 1  # 0 = generator, 1 = game, 2 = menu
 
 shared_percent = Value(c_int)
 
@@ -212,15 +212,28 @@ def render_all():
         for x in range(VISUAL_WIDTH):
             id = visual[x][y]
 
-            tile_color = tile_list[id].color
+            #variation 1 - not good
+            tile_color = tile_list[id].colors[random.randint(0,len(tile_list[id].colors)-1)]
+
             # animate if two colors
             if tile_list[id].animation_color != "":
                 r = random.randrange(2)
                 if r >= 1:
                     tile_color = tile_list[id].animation_color
 
+            #variation 1 - not good
+            #tile_variation = random.randint(0,len(tile_list[id].chars)-1)
+            #variation 2 - even worse :D
+            tile_variation = 0
+            if len(tile_list[id].chars) > 1:
+                c = math.cos(x+y)
+                if c > 0:
+                    tile_variation = 1
+
+
+
             libtcod.console_set_default_foreground(con, getattr(color, tile_color))
-            libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET, int(tile_list[id].char),
+            libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET, int(tile_list[id].chars[tile_variation]),
                                      libtcod.BKGND_NONE)
 
     # draw all objects in the list
@@ -287,13 +300,13 @@ def load_tiles():
 
     for value in range(len(mycsv) - 1):
         name = mycsv[value + 1][1]
-        char = mycsv[value + 1][2]
+        chars = mycsv[value + 1][2]
         move_blocked = int(mycsv[value + 1][6])
         sight_block = int(mycsv[value + 1][7])
         color = mycsv[value + 1][8]
         animation_color = mycsv[value + 1][9]
 
-        tile = tiles.Tile(name, char, move_blocked, sight_block, color, animation_color)
+        tile = tiles.Tile(name, chars, move_blocked, sight_block, color, animation_color)
         tile_list.append(tile)
 
 
