@@ -511,7 +511,7 @@ def create_tilemap_image(tilemap):
             elif tilemap[x * size + y] == 5:
                 pixels[x, y] = (0, 127, 0)
 
-    img.save('tile_map.png')
+    img.save('debug/tile_map.png')
 
     # update_text = "terrain generation finished"
     # info_text.set(update_text)
@@ -595,7 +595,7 @@ def generate_biomes(tilemap):
                         continue
 
                     r = random.randrange(8)
-                    file = open("data/structures/house_" + str(r) + ".txt", "r")
+                    file = open("data/structures/house_" + str(r) + ".struct", "r")
 
                     # build direction
                     r_line = random.randrange(2)
@@ -766,7 +766,7 @@ def generate_biomes(tilemap):
                     continue
 
                 r = random.randrange(9)
-                file = open("data/structures/castle_" + str(r) + ".txt", "r")
+                file = open("data/structures/castle_" + str(r) + ".struct", "r")
 
                 line = 0
                 row = 0
@@ -804,7 +804,7 @@ def generate_biomes(tilemap):
             # if honey ground
             if 1:  # value == 16 or value == 17:
 
-                file = open("data/structures/hexagon.txt", "r")
+                file = open("data/structures/hexagon.struct", "r")
 
                 line = 0
                 row = 0
@@ -830,7 +830,7 @@ def generate_biomes(tilemap):
             # if honey ground
             if 1:  # value == 16:
 
-                file = open("data/structures/hexagon.txt", "r")
+                file = open("data/structures/hexagon.struct", "r")
 
                 line = 0
                 row = 0
@@ -898,7 +898,7 @@ def generate_biomes(tilemap):
             if biomemap[x][y] == 7:  # frozen
                 pixels[x, y] = (120, 160, 210)
 
-    img.save('biome_map.png')
+    img.save('debug/biome_map.png')
 
     # image for complete map
     img = Image.new('RGB', (size, size), "white")
@@ -916,7 +916,7 @@ def generate_biomes(tilemap):
 
                 pixels[x, y] = (red, green, blue)
 
-    img.save('complete_map.png')
+    img.save('debug/complete_map.png')
 
     # update_text = "complete generation finished"
     # info_text.set(update_text)

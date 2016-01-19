@@ -1,17 +1,12 @@
 import csv
-import random
 import math
+import random
 import thread
 from ctypes import c_int
 from multiprocessing import Value
 
-import color
-import island_generator
 import libtcodpy as libtcod
-import loader
-import nonplayercharacter
-import playercharacter
-import tiles
+from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles
 
 # actual size of the window
 SCREEN_WIDTH = 90
@@ -34,7 +29,7 @@ FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
 MAX_MONSTERS = 20;
 
-game_status = 1  # 0 = generator, 1 = game, 2 = menu
+game_status = 0  # 0 = generator, 1 = game, 2 = menu
 
 shared_percent = Value(c_int)
 
