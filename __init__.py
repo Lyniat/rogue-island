@@ -6,7 +6,6 @@ from ctypes import c_int
 from multiprocessing import Value
 import shelve
 import textwrap
-import time
 
 import libtcodpy as libtcod
 from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles
@@ -50,7 +49,7 @@ top_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT_TOP)
 numKlicks = 0
 time = 1
 
-game_status = 3  # 0 = generator, 1 = game, 2 = menu, 3 = intro
+game_status = 1  # 0 = generator, 1 = game, 2 = menu, 3 = intro
 
 game_msgs = []
 
@@ -236,7 +235,12 @@ def render_all():
             id = visual[x][y]
 
             # variation 1 - not good
-            tile_color = tile_list[id].colors[random.randint(0, len(tile_list[id].colors) - 1)]
+            tile_color = tile_list[id].colors[0]
+            if len(tile_list[id].colors) > 1:
+                value = math.degrees((x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
+                print value
+                if int(value) % 2 == 1:
+                    tile_color = tile_list[id].colors[1]
 
             # animate if two colors
             if tile_list[id].animation_color != "":
@@ -244,14 +248,21 @@ def render_all():
                 if r >= 1:
                     tile_color = tile_list[id].animation_color
 
-            # variation 1 - not good
-            # tile_variation = random.randint(0,len(tile_list[id].chars)-1)
-            # variation 2 - even worse :D
             tile_variation = 0
-            if len(tile_list[id].chars) > 1:
-                c = math.cos(x + y)
-                if c > 0:
+            if 1 < len(tile_list[id].chars) <= 2:
+                value = math.lgamma((x + player.x - VISUAL_WIDTH / 2)*MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                print value
+                if int(value) % 2 == 1:
                     tile_variation = 1
+
+            elif len(tile_list[id].chars) > 2:
+                value = math.lgamma((x + player.x - VISUAL_WIDTH / 2)*MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                print value
+                if int(value) % 3 == 1:
+                    tile_variation = 1
+                elif int(value) % 3 == 2:
+                    tile_variation = 2
+
 
             libtcod.console_set_default_foreground(con, getattr(color, tile_color))
             libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET,
@@ -500,14 +511,26 @@ def game_over(player):
 
 def save_game():
     # open a new empty shelve (possibly overwriting an old one) to write the game data
-    file = shelve.open('savegame', 'n')
-    file['map'] = map
-    file['objects'] = objects
-    file['player_index'] = objects.index(player)  # index of player in objects list
-    file['inventory'] = inventory
-    file['game_msgs'] = game_msgs
-    file['game_state'] = game_state
+    '''
+    file = shelve.open('player.sav', 'n')
+    file['player_race']
+    file['player_gender'] =  # index of player in objects list
+    file['player_first_name']
+    file['player_name']
+
+    file['player_hp'] = player.entclass.hp
+    file['player_agility'] = player.agility
+    file['player_strength'] = player.strength
+    file['player_intelligence']
+    file['player_vitality']
+    file['player_xp']
+    file['player_level']
+    file['player_max_hp']
+    file['player_points']
+    file['player_perks']
+
     file.close()
+    '''
 
 
 """
@@ -694,7 +717,7 @@ while not libtcod.console_is_window_closed():
         update_info(info_text.get())
         # print generator_thread
 
-    # libtcod.console_flush()
+    libtcod.console_flush()
 
     if game_status == 1:
         # render the screen
@@ -716,7 +739,7 @@ while not libtcod.console_is_window_closed():
                     object.ai.take_turn()
     # Intro
     if game_status == 3:
-        img = libtcod.image_load("data/images/intro_0.png")
+        img = libtcod.image_load("data/images/intro_2.png")
         libtcod.image_blit_rect(img, 0, 0, 0, -1, -1, libtcod.BKGND_SET)
         libtcod.console_flush()
         key = libtcod.console_wait_for_keypress(True)

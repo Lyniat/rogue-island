@@ -1,10 +1,10 @@
 ID;NAME;CHAR;R (only Image);G (only Image);B (only Image);BEHAVIOR;SIGHT BLOCK;COLORS;COLORS ANIMATION
 0;water(sea);247;0;0;127;2;0;blue;navy
 1;sand;176;255;255;0;1;0;yellow;
-2;grass(small);59,44;0;255;0;1;0;lime,green;
+2;grass(small);59,44,39;0;255;0;1;0;lime,green;
 3;water(river);247;0;0;255;2;0;blue;navy;
-4;grass(medium);59,44;0;200;0;1;0;lime,green;
-5;grass(tall);59,44;0;127;0;1;0;lime,green;
+4;grass(medium);59,44,39;0;200;0;1;0;lime,green;
+5;grass(tall);59,44,39;0;127;0;1;0;lime,green;
 6;tree;5,6;100;50;0;0;1;green;
 7;wall;219;0;0;0;0;1;gray;
 8;door;179;63;63;63;1;1;white;
