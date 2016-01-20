@@ -6,6 +6,7 @@ from ctypes import c_int
 from multiprocessing import Value
 import shelve
 import textwrap
+import time
 
 import libtcodpy as libtcod
 from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles
@@ -49,7 +50,7 @@ top_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT_TOP)
 numKlicks = 0
 time = 1
 
-game_status = 1  # 0 = generator, 1 = game, 2 = menu
+game_status = 3  # 0 = generator, 1 = game, 2 = menu, 3 = intro
 
 game_msgs = []
 
@@ -234,8 +235,8 @@ def render_all():
         for x in range(VISUAL_WIDTH):
             id = visual[x][y]
 
-            #variation 1 - not good
-            tile_color = tile_list[id].colors[random.randint(0,len(tile_list[id].colors)-1)]
+            # variation 1 - not good
+            tile_color = tile_list[id].colors[random.randint(0, len(tile_list[id].colors) - 1)]
 
             # animate if two colors
             if tile_list[id].animation_color != "":
@@ -243,19 +244,18 @@ def render_all():
                 if r >= 1:
                     tile_color = tile_list[id].animation_color
 
-            #variation 1 - not good
-            #tile_variation = random.randint(0,len(tile_list[id].chars)-1)
-            #variation 2 - even worse :D
+            # variation 1 - not good
+            # tile_variation = random.randint(0,len(tile_list[id].chars)-1)
+            # variation 2 - even worse :D
             tile_variation = 0
             if len(tile_list[id].chars) > 1:
-                c = math.cos(x+y)
+                c = math.cos(x + y)
                 if c > 0:
                     tile_variation = 1
 
-
-
             libtcod.console_set_default_foreground(con, getattr(color, tile_color))
-            libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET, int(tile_list[id].chars[tile_variation]),
+            libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET,
+                                     int(tile_list[id].chars[tile_variation]),
                                      libtcod.BKGND_NONE)
 
     # draw all objects in the list
@@ -288,8 +288,8 @@ def render_all():
                libtcod.light_red, libtcod.darker_red)
     # shows the time
     render_timeLine(top_panel, 1, 1, BAR_WIDTH_TOP, 'O', calcTime(), 24, libtcod.dark_blue)
-    #render_bar(top_panel, 1, 1, BAR_WIDTH_TOP, 'TIME', calcTime(), 24,
-     #          libtcod.light_yellow, libtcod.dark_yellow)
+    # render_bar(top_panel, 1, 1, BAR_WIDTH_TOP, 'TIME', calcTime(), 24,
+    #          libtcod.light_yellow, libtcod.dark_yellow)
     # display names of objects under the mouse
     libtcod.console_set_default_foreground(bottom_panel, libtcod.light_gray)
     libtcod.console_print_ex(bottom_panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, '')
@@ -354,6 +354,7 @@ def menu(header, options, width):
     if index >= 0 and index < len(options): return index
     return None
 
+
 """
 def get_names_under_mouse():
     global mouse
@@ -368,6 +369,7 @@ def get_names_under_mouse():
     names = ', '.join(names)  # join the names, separated by commas
     return names.capitalize()
 """
+
 
 def render_bar(panel, x, y, total_width, name, value, maximum, bar_color, back_color):
     # render a bar (HP, experience, etc). first calculate the width of the bar
@@ -452,7 +454,7 @@ def calcTime():
 
 
 def render_timeLine(panel, x, y, total_width, name, value, maximum, back_color):
-     # render a bar (HP, experience, etc). first calculate the width of the bar
+    # render a bar (HP, experience, etc). first calculate the width of the bar
     bar_width = int(float(value) / maximum * total_width)
 
     # render the background first
@@ -463,7 +465,8 @@ def render_timeLine(panel, x, y, total_width, name, value, maximum, back_color):
     libtcod.console_set_default_background(panel, libtcod.blue)
     x = value
     if bar_width > 0:
-       libtcod.console_put_char_ex(panel, x, y, 15, libtcod.yellow, libtcod.blue)
+        libtcod.console_put_char_ex(panel, x, y, 15, libtcod.yellow, libtcod.blue)
+
 
 def perk_menu(header, options1, options2):
     # show a menu with each item of the inventory as an option
@@ -494,6 +497,7 @@ def game_over(player):
     player.char = '%'
     player.color = libtcod.dark_red
 
+
 def save_game():
     # open a new empty shelve (possibly overwriting an old one) to write the game data
     file = shelve.open('savegame', 'n')
@@ -504,6 +508,7 @@ def save_game():
     file['game_msgs'] = game_msgs
     file['game_state'] = game_state
     file.close()
+
 
 """
 def play_game():
@@ -537,6 +542,7 @@ def play_game():
                     object.ai.take_turn()
 """
 
+
 def load_game():
     # open the previously saved shelve and load the game data
     global map, objects, player, inventory, game_msgs, game_state
@@ -549,6 +555,7 @@ def load_game():
     game_msgs = file['game_msgs']
     game_state = file['game_state']
     file.close()
+
 
 """
 def new_game():
@@ -623,10 +630,6 @@ def handle_keys():
                 chosen_perk = perk_menu('Perk Menu with 10 Options.\n', 0, 1)
 
 
-
-
-
-
 def load_tiles():
     with open("data/configurations/tiles.csv", 'rb') as f:
         mycsv = csv.reader(f, delimiter=';')
@@ -686,11 +689,12 @@ if game_status == 1:
     player_action = None
 
 while not libtcod.console_is_window_closed():
+
     if game_status == 0:
         update_info(info_text.get())
         # print generator_thread
 
-    libtcod.console_flush()
+    # libtcod.console_flush()
 
     if game_status == 1:
         # render the screen
@@ -710,3 +714,9 @@ while not libtcod.console_is_window_closed():
             for object in objects:
                 if object.ai:
                     object.ai.take_turn()
+    # Intro
+    if game_status == 3:
+        img = libtcod.image_load("data/images/intro_0.png")
+        libtcod.image_blit_rect(img, 0, 0, 0, -1, -1, libtcod.BKGND_SET)
+        libtcod.console_flush()
+        key = libtcod.console_wait_for_keypress(True)
