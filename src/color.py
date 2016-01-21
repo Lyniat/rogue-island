@@ -4,7 +4,7 @@ white = libtcod.Color(255, 255, 255)
 silver = libtcod.Color(192, 192, 192)
 gray = libtcod.Color(127, 127, 127)
 black = libtcod.Color(0, 0, 0)
-# red
+red = libtcod.Color(255, 0, 0)
 maroon = libtcod.Color(127, 0, 0)
 yellow = libtcod.Color(255, 255, 0)
 olive = libtcod.Color(127, 127, 0)
@@ -17,5 +17,5 @@ navy = libtcod.Color(0, 0, 127)
 # fuchsia
 purple = libtcod.Color(127, 0, 127)
 
-#only for testing
-debug = libtcod.Color(255,102,0)
+# only for testing
+debug = libtcod.Color(255, 102, 0)
