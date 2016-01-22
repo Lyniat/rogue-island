@@ -6,11 +6,11 @@ class monster(object):
         self.strength = strength
         self.intelligence = intelligence
         self.on_death = on_death
+        self.stunned = 0
 
     def take_damage(self, dmg):
         if dmg > 0:
             self.hp -= dmg
-
         if self.hp <= 0:
                 function = self.on_death
                 if function is not None:
@@ -23,7 +23,7 @@ class monster(object):
             damage = self.strength - target.entclass.strength
 
         if damage > 0:
-            target.entclass.take_damage(damage)
+            target.entclass.take_damage(self, damage)
         else:
             print self.owner.name.capitalize() + ' attacks you, but without any effect.'
 

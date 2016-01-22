@@ -8,7 +8,7 @@ from ctypes import c_int
 from multiprocessing import Value
 
 import libtcodpy as libtcod
-from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui
+from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars
 
 # actual size of the window
 SCREEN_WIDTH = 90
@@ -46,7 +46,7 @@ MAX_MONSTERS = 20
 # GUI panel at the bottom/top of the screen
 bottom_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 top_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT_TOP)
-numKlicks = 0
+numClicks = 0
 time = 1
 
 game_status = 1  # 0 = generator, 1 = game, 2 = menu, 3 = intro
@@ -112,9 +112,9 @@ class Object:
         # erase the character that represents this object
         libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
 
-    def move_towards(self, target_x, target_y):
-        dx = target_x - self.x
-        dy = target_y - self.y
+    def move_towards(self, object):
+        dx = object.x - self.x
+        dy = object.y - self.y
         distance = math.sqrt(dx ** 2 + dy ** 2)
         dx = int(round(dx / distance))
         dy = int(round(dy / distance))
@@ -124,6 +124,43 @@ class Object:
         dx = other.x - self.x
         dy = other.y - self.y
         return math.sqrt(dx ** 2 + dy ** 2)
+"""
+    def move_astar(self, target):
+        # This creates a 'minimap' of the visible screen
+        fov = libtcod.map_new(VISUAL_WIDTH, VISUAL_HEIGHT)
+        # Get the position of the top left tile for further calculations
+        start_tile_x = player.x - 27
+        start_tile_y = player.y - 37
+        # Scan the current map for blocking walls and objects
+        for y1 in range(VISUAL_HEIGHT):
+            for x1 in range(VISUAL_WIDTH):
+                if is_blocked(start_tile_x + x1, start_tile_y + y1):
+                    libtcod.map_set_properties(fov, start_tile_x + x1, start_tile_y + y1, True, False)
+
+        for obj in objects:
+            if obj.blocks and obj != self and obj != target:
+                # Set the tile as a wall so it must be navigated around
+                (x, y) = relative_coordinates(obj.x, obj.y)
+                libtcod.map_set_properties(fov, x, y, True, False)
+
+        # Allocate a A* path using the libtcod provided library
+        my_path = libtcod.path_new_using_map(fov, 0)
+
+        # Compute the path between self's coordinates and the target's coordinates
+        libtcod.path_compute(my_path, self.x, self.y, target.x, target.y)
+
+        if not libtcod.path_is_empty(my_path) and libtcod.path_size(my_path) < 25:
+            # Find the next coordinates in the computed full path
+            x, y = libtcod.path_walk(my_path, True)
+            if x or y:
+                # Set self's coordinates to the next path tile
+                self.x = x
+                self.y = y
+        else:
+            print 'hm'
+            self.move_towards(target.x, target.y)
+"""
+
 
 
 # Transforms the in-map coordinates into those of the console itself
@@ -152,9 +189,23 @@ def attackmove(dx, dy):
             target = object
             break
 
-    # attack if target found, move otherwise
+    # attack if target found, move otherwise - first proximity block is checked in case perk Dungeon Basher is taken
+
     if target is not None:
+
+        if is_blocked(target.x - 1,target.y):
+            globalvars.monster_proximity_block[3] = 1
+        if is_blocked(target.x + 1, target.y):
+            globalvars.monster_proximity_block[1] = 1
+        if is_blocked(target.x, target.y - 1):
+            globalvars.monster_proximity_block[0] = 1
+        if is_blocked(target.x, target.y + 1):
+            globalvars.monster_proximity_block[2] = 1
+
+        print globalvars.monster_proximity_block
+
         player.entclass.attack(target)
+
     else:
         player.move(dx, dy)
 
@@ -198,10 +249,16 @@ def place_objects():
 class monsterAi():
     def take_turn(self):
         monster = self.owner
-        if monster.distance_to(player) >= 2:
-            monster.move_towards(player.x, player.y)
-        elif player.entclass.hp > 0:
-            monster.entclass.attack(player)
+        if monster.entclass.stunned == 0:
+            if monster.distance_to(player) >= 2:
+                monster.move_towards(player)
+            elif player.entclass.hp > 0:
+                monster.entclass.attack(player)
+        elif monster.entclass.stunned == 1:
+            print '*UNSTUNNED*'
+            monster.entclass.stunned = 0
+
+
 
 
 def update_visual_map():
@@ -272,8 +329,6 @@ def render_all():
             object.draw()
         player.draw()
 
-    print 'HP: ' + str(player.entclass.hp) + '/' + str(player.entclass.max_hp)
-
     # blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
@@ -294,7 +349,7 @@ def render_all():
     gui.render_hp_bar(bottom_panel, 1, 1, BAR_WIDTH, 'HP', player.entclass.hp, player.entclass.max_hp,
                       libtcod.light_red, libtcod.darker_red)
     # shows the time
-    gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, calcTime(), color.blue)
+    gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, calc_time(), color.blue)
     # render_bar(top_panel, 1, 1, BAR_WIDTH_TOP, 'TIME', calcTime(), 24,
     #          libtcod.light_yellow, libtcod.dark_yellow)
     # display names of objects under the mouse
@@ -306,16 +361,16 @@ def render_all():
     libtcod.console_blit(top_panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT_TOP, 0, 0, PANEL_TOP)
 
 
-def calcTime():
+def calc_time():
     global time
-    global numKlicks
-    print numKlicks
-    # if numKlicks % 2 == 0:
-    # f   time += 1
-    time = numKlicks
-    if numKlicks > BAR_WIDTH_TOP:
+    global numClicks
+
+    if numClicks % 2 == 0:
+        time += 1
+    # time = numKlicks
+    if time > BAR_WIDTH_TOP - 1:
         time = 0
-        numKlicks = 0
+        numClicks = 0
 
     return time
 
@@ -366,7 +421,6 @@ def menu(header, options, width):
     # present the root console to the player and wait for a key-press
     libtcod.console_flush()
     key = libtcod.console_wait_for_keypress(True)
-
     if key.vk == libtcod.KEY_ENTER and key.lalt:  # (special case) Alt+Enter: toggle fullscreen
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
 
@@ -377,7 +431,7 @@ def menu(header, options, width):
 
 
 def game_over(player):
-    print 'You died!'
+    message('You died!')
     player.char = '%'
     player.color = libtcod.dark_red
 
@@ -419,7 +473,7 @@ def load_game():
 
 
 def monster_death(monster):
-    print monster.name.capitalize() + ' is dead!'
+    message(str(monster.name) + ' is dead!')
     monster.char = '%'
     monster.color = libtcod.dark_red
     monster.blocks = False
@@ -429,7 +483,7 @@ def monster_death(monster):
 
 
 def handle_keys():
-    global numKlicks
+    global numClicks
     # key = libtcod.console_check_for_keypress()  #real-time
     key = libtcod.console_wait_for_keypress(True)  # turn-based
 
@@ -440,37 +494,42 @@ def handle_keys():
     elif key.vk == libtcod.KEY_ESCAPE:
         return True  # exit game
 
-    if libtcod.console_is_key_pressed(libtcod.KEY_UP):
-        attackmove(0, -1)
-        numKlicks += 1
-    elif libtcod.console_is_key_pressed(libtcod.KEY_DOWN):
-        attackmove(0, 1)
-        numKlicks += 1
-    elif libtcod.console_is_key_pressed(libtcod.KEY_LEFT):
-        attackmove(-1, 0)
-        numKlicks += 1
-    elif libtcod.console_is_key_pressed(libtcod.KEY_RIGHT):
-        attackmove(1, 0)
-        numKlicks += 1
-    else:
-        # return 'player_pass'
-        key_char = chr(key.c)
+    if game_status == 1:
+        if libtcod.console_is_key_pressed(libtcod.KEY_UP):
+            attackmove(0, -1)
+            globalvars.player_y = player.y
+            numClicks += 1
+        elif libtcod.console_is_key_pressed(libtcod.KEY_DOWN):
+            attackmove(0, 1)
+            globalvars.player_y = player.y
+            numClicks += 1
+        elif libtcod.console_is_key_pressed(libtcod.KEY_LEFT):
+            attackmove(-1, 0)
+            globalvars.player_x = player.x
+            numClicks += 1
+        elif libtcod.console_is_key_pressed(libtcod.KEY_RIGHT):
+            attackmove(1, 0)
+            globalvars.player_x = player.x
+            numClicks += 1
+        else:
+            # return 'player_pass'
+            key_char = chr(key.c)
 
-        if key_char == 'p' and not libtcod.console_is_key_pressed(key):
-            # show in-game menu
-            chosen_option = gui.perk_menu('Press the key next to the perk you want to use.\n', 1, 0)
-            if chosen_option is 0:
-                chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+            if key_char == 'p' and not libtcod.console_is_key_pressed(key):
+                # show in-game menu
+                chosen_option = gui.perk_menu('Press the key next to the perk you want to use.\n', 1, 0)
+                if chosen_option is 0:
+                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
 
-            elif chosen_option is 1:
-                chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+                elif chosen_option is 1:
+                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
 
-            elif chosen_option is 2:
-                chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+                elif chosen_option is 2:
+                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
 
-        if key_char == 'i' and not libtcod.console_is_key_pressed(key):
-            # show black screen in game
-            gui.text_menu()
+            if key_char == 'i' and not libtcod.console_is_key_pressed(key):
+                # show black screen in game
+                gui.text_menu()
 
 
 def load_tiles():
@@ -567,6 +626,9 @@ if game_status == 1:
     player.x = 100
     player.y = 100
 
+    globalvars.player_x = player.x
+    globalvars.player_y = player.y
+
     make_visual_map()
 
     player_action = None
@@ -592,7 +654,7 @@ while not libtcod.console_is_window_closed():
 
         # handle keys and exit game if needed
         exit = handle_keys()
-
+        print 'pass'
         if game_status == 1 and player_action != 'player_pass':
             for object in objects:
                 if object.ai:
