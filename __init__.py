@@ -1,7 +1,6 @@
 import csv
 import math
 import random
-import shelve
 import textwrap
 import thread
 from ctypes import c_int
@@ -36,7 +35,7 @@ MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
 INVENTORY_WIDTH = 50
 
-LIMIT_FPS = 120  # 120 frames-per-second maximum (for testing)
+LIMIT_FPS = 30  # 30 frames-per-second
 
 FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
@@ -55,6 +54,7 @@ game_msgs = []
 
 shared_percent = Value(c_int)
 
+objects = []
 
 class Info_text:
     def __init__(self, value):
@@ -124,6 +124,8 @@ class Object:
         dx = other.x - self.x
         dy = other.y - self.y
         return math.sqrt(dx ** 2 + dy ** 2)
+
+
 """
     def move_astar(self, target):
         # This creates a 'minimap' of the visible screen
@@ -162,7 +164,6 @@ class Object:
 """
 
 
-
 # Transforms the in-map coordinates into those of the console itself
 def relative_coordinates(x, y):
     (x, y) = (
@@ -193,7 +194,7 @@ def attackmove(dx, dy):
 
     if target is not None:
 
-        if is_blocked(target.x - 1,target.y):
+        if is_blocked(target.x - 1, target.y):
             globalvars.monster_proximity_block[3] = 1
         if is_blocked(target.x + 1, target.y):
             globalvars.monster_proximity_block[1] = 1
@@ -257,8 +258,6 @@ class monsterAi():
         elif monster.entclass.stunned == 1:
             print '*UNSTUNNED*'
             monster.entclass.stunned = 0
-
-
 
 
 def update_visual_map():
@@ -436,44 +435,6 @@ def game_over(player):
     player.color = libtcod.dark_red
 
 
-def save_game():
-    # open a new empty shelve (possibly overwriting an old one) to write the game data
-    file = shelve.open('player.sav', 'n')
-    file['player_race'] = player.entclass.race
-    file['player_gender'] = player.entclass.gender
-    file['player_first_name'] = player.entclass.first_name
-    file['player_name'] = player.entclass.name
-
-
-
-    file['player_hp'] = player.entclass.hp
-    file['player_agility'] = player.entclass.agility
-    file['player_strength'] = player.entclass.strength
-    file['player_intelligence'] = player.entclass.intelligence
-    file['player_vitality'] = player.entclass.vitality
-    file['player_xp'] = player.entclass.xp
-    file['player_level'] = player.entclass.level
-    file['player_max_hp'] = player.entclass.max_hp
-    file['player_'] = player.entclass.points
-    file['player_perks'] = player.entclass.perks
-
-    file.close()
-
-
-def load_game():
-    # open the previously saved shelve and load the game data
-    global map, objects, player, inventory, game_msgs, game_state
-
-    file = shelve.open('player.sav', 'r')
-    map = file['map']
-    objects = file['objects']
-    player = objects[file['player_index']]  # get index of player in objects list and access it
-    inventory = file['inventory']
-    game_msgs = file['game_msgs']
-    game_state = file['game_state']
-    file.close()
-
-
 def monster_death(monster):
     message(str(monster.name) + ' is dead!')
     monster.char = '%'
@@ -534,7 +495,7 @@ def handle_keys():
                 gui.text_menu()
 
             if key_char == 'x' and not libtcod.console_is_key_pressed(key):
-                save_game()
+                gui.save_game(player, objects)
                 message('Game saved!')
 
 
@@ -586,14 +547,20 @@ def main_menu():
         if choice == 1:  # new game
             game_status = 1
 
+            player.x = 100
+            player.y = 100
+
             return game_status
         if choice == 2:  # load last game
             try:
-                gui.load_game()
+                gui.load_game(player, map, objects)
+                print objects
             except:
                 gui.msgbox('\n No saved game to load.\n', 24)
                 continue
             game_status = 1
+
+            return game_status
         elif choice == 3:  # quit
             return
 
@@ -607,6 +574,14 @@ libtcod.console_set_custom_font('data/fonts/terminal' + str(FONT_SIZE) + 'x' + s
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'ASCII Adventure', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+# create the entity and the object of the player
+playerentity = playercharacter.entity(hp=100, strength=5, agility=5, intelligence=5, vitality=5,
+                                      first_name='Lennard', name='Cooper', race='human', gender='f',
+                                      on_death=game_over)
+player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.white, blocks=True,
+                entclass=playerentity)
+
 game_status = main_menu()
 global map
 global tile_list
@@ -620,17 +595,7 @@ if game_status == 1:
     load_tiles()
     map = loader.load_map()
 
-    # create the entity and the object of the player
-    playerentity = playercharacter.entity(hp=100, strength=5, agility=5, intelligence=5, vitality=5,
-                                          first_name='Lennard', name='Cooper', race='human', gender='f',
-                                          on_death=game_over)
-    player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.white, blocks=True,
-                    entclass=playerentity)
-    objects = []
     objects.append(player)
-
-    player.x = 100
-    player.y = 100
 
     globalvars.player_x = player.x
     globalvars.player_y = player.y

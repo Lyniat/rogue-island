@@ -236,27 +236,51 @@ def msgbox(text, width=50):
     menu(text, [], width)  # use menu() as a sort of "message box"
 
 
-def save_game():
+def save_game(player, objects):
     # open a new empty shelve (possibly overwriting an old one) to write the game data
-    file = shelve.open('savegame', 'n')
-    file['map'] = map
+    file = shelve.open('player.sav', 'n')
+    file['player_race'] = player.entclass.race
+    file['player_gender'] = player.entclass.gender
+    file['player_first_name'] = player.entclass.first_name
+    file['player_name'] = player.entclass.name
+
+    file['player_pos_x'] = player.x
+    file['player_pos_y'] = player.y
+
+    file['player_hp'] = player.entclass.hp
+    file['player_agility'] = player.entclass.agility
+    file['player_strength'] = player.entclass.strength
+    file['player_intelligence'] = player.entclass.intelligence
+    file['player_vitality'] = player.entclass.vitality
+    file['player_xp'] = player.entclass.xp
+    file['player_level'] = player.entclass.level
+    file['player_max_hp'] = player.entclass.max_hp
+    file['player_'] = player.entclass.points
+    file['player_perks'] = player.entclass.perks
+
+    file.close()
+
+    file = shelve.open('objects.sav', 'n')
     file['objects'] = objects
-    file['player_index'] = objects.index(player)  # index of player in objects list
-    file['inventory'] = inventory
-    file['game_msgs'] = game_msgs
-    file['game_state'] = game_state
     file.close()
 
 
-def load_game():
+def load_game(player, map, objects):
     # open the previously saved shelve and load the game data
-    global map, objects, player, inventory, game_msgs, game_state
+    file = shelve.open('player.sav', 'r')
+    player.entclass.race = file['player_race']
+    player.entclass.gender = file['player_gender']
+    player.entclass.first_name = file['player_first_name']
+    player.entclass.name = file['player_name']
 
-    file = shelve.open('savegame', 'r')
-    map = file['map']
-    objects = file['objects']
-    player = objects[file['player_index']]  # get index of player in objects list and access it
-    inventory = file['inventory']
-    game_msgs = file['game_msgs']
-    game_state = file['game_state']
+    player.x = file['player_pos_x']
+    player.y = file['player_pos_y']
+
+    player.entclass.hp = file['player_hp']
     file.close()
+
+    file = shelve.open('objects.sav', 'r')
+    objects = file['objects']
+    file.close()
+
+    print("loaded")

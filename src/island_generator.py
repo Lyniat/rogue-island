@@ -629,6 +629,8 @@ def generate_biomes(tilemap):
                             tilemap[(x + row) * size + y + line] = 9
                         if char == "~":
                             tilemap[(x + row) * size + y + line] = 3
+                        if char == ";":
+                            tilemap[(x + row) * size + y + line] = 2
                         row += row_increaser
                         if char == "\n":
                             row = row_reset
