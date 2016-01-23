@@ -22,8 +22,6 @@
               <object class="GtkMenuBar" id="PlayerMenubar">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">start</property>
-                <property name="valign">start</property>
                 <property name="margin_right">119</property>
                 <property name="resize_mode">queue</property>
                 <property name="child_pack_direction">ttb</property>
@@ -44,6 +42,7 @@
                             <property name="can_focus">False</property>
                             <property name="use_underline">True</property>
                             <property name="use_stock">True</property>
+                            <signal name="activate" handler="on_select_open" swapped="no"/>
                           </object>
                         </child>
                         <child>

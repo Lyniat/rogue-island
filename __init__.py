@@ -444,6 +444,8 @@ def save_game():
     file['player_first_name'] = player.entclass.first_name
     file['player_name'] = player.entclass.name
 
+
+
     file['player_hp'] = player.entclass.hp
     file['player_agility'] = player.entclass.agility
     file['player_strength'] = player.entclass.strength
@@ -462,7 +464,7 @@ def load_game():
     # open the previously saved shelve and load the game data
     global map, objects, player, inventory, game_msgs, game_state
 
-    file = shelve.open('savegame', 'r')
+    file = shelve.open('player.sav', 'r')
     map = file['map']
     objects = file['objects']
     player = objects[file['player_index']]  # get index of player in objects list and access it
@@ -530,6 +532,10 @@ def handle_keys():
             if key_char == 'i' and not libtcod.console_is_key_pressed(key):
                 # show black screen in game
                 gui.text_menu()
+
+            if key_char == 'x' and not libtcod.console_is_key_pressed(key):
+                save_game()
+                message('Game saved!')
 
 
 def load_tiles():
