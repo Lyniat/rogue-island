@@ -2,22 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="14299c95-0ef5-4537-b148-b2ae71489315" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/debug/biome_map.png" afterPath="$PROJECT_DIR$/debug/biome_map.png" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/debug/complete_map.png" afterPath="$PROJECT_DIR$/debug/complete_map.png" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/debug/tile_map.png" afterPath="$PROJECT_DIR$/debug/tile_map.png" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/objects.sav" afterPath="$PROJECT_DIR$/objects.sav" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/player.sav" afterPath="$PROJECT_DIR$/player.sav" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/world.sav" afterPath="$PROJECT_DIR$/world.sav" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/__init__.py" afterPath="$PROJECT_DIR$/__init__.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/structures/house_1.struct" afterPath="$PROJECT_DIR$/data/structures/house_1.struct" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/structures/house_2.struct" afterPath="$PROJECT_DIR$/data/structures/house_2.struct" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/structures/house_3.struct" afterPath="$PROJECT_DIR$/data/structures/house_3.struct" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/structures/house_4.struct" afterPath="$PROJECT_DIR$/data/structures/house_4.struct" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/structures/house_5.struct" afterPath="$PROJECT_DIR$/data/structures/house_5.struct" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/structures/house_6.struct" afterPath="$PROJECT_DIR$/data/structures/house_6.struct" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/structures/house_7.struct" afterPath="$PROJECT_DIR$/data/structures/house_7.struct" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/gui.py" afterPath="$PROJECT_DIR$/src/gui.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/island_generator.py" afterPath="$PROJECT_DIR$/src/island_generator.py" />
     </list>
     <ignored path="ascii_adventure.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -41,8 +28,8 @@
       <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="56" column="11" selection-start-line="56" selection-start-column="11" selection-end-line="56" selection-end-column="11" />
+            <state vertical-scroll-proportion="-8.571428">
+              <caret line="555" column="24" selection-start-line="555" selection-start-column="20" selection-end-line="555" selection-end-column="24" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -107,8 +94,8 @@
       <file leaf-file-name="gui.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/gui.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.856">
-              <caret line="282" column="11" selection-start-line="282" selection-start-column="11" selection-end-line="282" selection-end-column="11" />
+            <state vertical-scroll-proportion="0.1682243">
+              <caret line="257" column="44" selection-start-line="257" selection-start-column="44" selection-end-line="257" selection-end-column="44" />
               <folding>
                 <element signature="e#0#13#0" expanded="true" />
               </folding>
@@ -186,8 +173,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -480,27 +467,27 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1" y="30" width="1602" height="871" extended-state="6" />
-    <editor active="false" />
+    <frame x="-1" y="30" width="1602" height="871" extended-state="7" />
+    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.214375" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3208763" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3208763" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32944834" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -959,8 +946,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="56" column="11" selection-start-line="56" selection-start-column="11" selection-end-line="56" selection-end-column="11" />
+        <state vertical-scroll-proportion="-8.571428">
+          <caret line="555" column="24" selection-start-line="555" selection-start-column="20" selection-end-line="555" selection-end-column="24" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -969,8 +956,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/gui.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.856">
-          <caret line="282" column="11" selection-start-line="282" selection-start-column="11" selection-end-line="282" selection-end-column="11" />
+        <state vertical-scroll-proportion="0.1682243">
+          <caret line="257" column="44" selection-start-line="257" selection-start-column="44" selection-end-line="257" selection-end-column="44" />
           <folding>
             <element signature="e#0#13#0" expanded="true" />
           </folding>

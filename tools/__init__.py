@@ -5,6 +5,12 @@ import shelve
 app = None
 path = None
 
+# GUI panel at the bottom/top/side of the screen
+bottom_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
+top_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT_TOP)
+side_panel = libtcod.console_new(SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT)
+numKlicks = 0
+time = 0
 
 class main:
     def __init__(self):

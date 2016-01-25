@@ -2,7 +2,6 @@ import shelve
 import textwrap
 from ctypes import c_int
 from multiprocessing import Value
-
 import libtcodpy as libtcod
 from src import color
 
@@ -52,6 +51,8 @@ numKlicks = 0
 time = 0
 ascii_block = 176
 ascii_sun = 15
+i = 1
+max_range = 21
 
 game_status = 1  # 0 = generator, 1 = game, 2 = menu
 
@@ -61,43 +62,29 @@ game_msgs = []
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 
-def render_hp_bar(panel, x, y, total_width, name, value, maximum, bar_color, back_color):
+def render_hp_bar(panel, x, y, total_width, name, value, maximum):
     global ascii_block
     # render a bar (HP, experience, etc). first calculate the width of the bar
-    # bar_width = int(float(value) / maximum * total_width)
-    # render the background first
-    # libtcod.console_set_default_background(panel, back_color)
-    # libtcod.console_rect(panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
-    # now render the bar on top
-    # libtcod.console_set_default_background(panel, bar_color)
-    # if bar_width > 0:
-    #    libtcod.console_rect(panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
-
-    # finally, some centered text with the values
-    # libtcod.console_set_default_foreground(panel, libtcod.white)
+    global i
+    global max_range
     default_X = x
-    max_range = 21
-    if value == maximum:
-        max_range = 21
-    elif maximum > value >= maximum - 10:
-        max_range = 21 - 4
-    elif maximum > value >= maximum - 20:
-        max_range = 21 - 8
-    elif maximum > value >= maximum - 30:
-        max_range = 21 - 12
-    elif maximum > value >= maximum - 40:
-        max_range = 21 - 16
-    elif maximum > value >= maximum - 50:
-        max_range = 21 - 20
-    elif value <= 0:
-        max_range = 0
+    # max_range = 21
+    steps = maximum / 21
+    # print steps
+    if value < (maximum - i * steps):
+        max_range -= 1
+        i += 1
 
-    for i in range(max_range):
-        libtcod.console_put_char_ex(panel, x, y, ascii_block, color.red, color.black)
-        x += 1
+    if value > 0:
+        for num in range(max_range):
+            libtcod.console_put_char_ex(panel, x, y, ascii_block, color.red, color.black)
+            x += 1
+
+    libtcod.console_set_default_foreground(panel, color.white)
     libtcod.console_print_ex(panel, default_X + total_width / 2, y + 1, libtcod.BKGND_NONE, libtcod.CENTER,
                              name + ': ' + str(value) + '/' + str(maximum))
-    # message('Welcome to Rogue Island', color.maroon)
+
+
 
 
 def render_timeLine(panel, x, y, total_width, value, back_color):
@@ -183,7 +170,8 @@ def perk_menu(header, options1, options2):
     #    options = [item.name for item in inventory]
     options = []
     if options1:
-        options = ['Opt 1', 'Opt 2', 'Opt 3']
+        options = ['Fortitude - Strengthens your durability', 'Cunning - Provides Utility based on Intelligence',
+                   'Savagery - Improves your damage']
     elif options2:
         options = ['Opt 1', 'Opt 2', 'Opt 3', 'Opt 4', 'Opt 5', 'Opt 6', 'Opt 7', 'Opt 8', 'Opt 9', 'Opt 10']
 
@@ -284,3 +272,33 @@ def load_game(player, map, objects):
     file.close()
 
     print("loaded")
+
+def perk_charge(panel, idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7):
+
+    charges = ['Arcane Missiles', 'Fireball', 'Frozen Tomb', 'Flurry', 'Enormous Blast', 'Determination', 'Smite',
+               'Blade Waltz']
+    if idx0 is not -1:
+        libtcod.console_set_default_foreground(panel, color.white)
+        libtcod.console_print_ex(panel, 0, 2, libtcod.BKGND_NONE, libtcod.LEFT, charges[0])
+    if idx1 is not -1:
+        libtcod.console_set_default_foreground(panel, color.red)
+        libtcod.console_print_ex(panel, 0, 5, libtcod.BKGND_NONE, libtcod.LEFT, charges[1])
+    if idx2 is not -1:
+        libtcod.console_set_default_foreground(panel, color.blue)
+        libtcod.console_print_ex(panel, 0, 8, libtcod.BKGND_NONE, libtcod.LEFT, charges[2])
+    if idx3 is not -1:
+        libtcod.console_set_default_foreground(panel, color.navy)
+        libtcod.console_print_ex(panel, 0, 11, libtcod.BKGND_NONE, libtcod.LEFT, charges[3])
+    if idx4 is not -1:
+        libtcod.console_set_default_foreground(panel, color.yellow)
+        libtcod.console_print_ex(panel, 0, 14, libtcod.BKGND_NONE, libtcod.LEFT, charges[4])
+    if idx5 is not -1:
+        libtcod.console_set_default_foreground(panel, color.maroon)
+        libtcod.console_print_ex(panel, 0, 17, libtcod.BKGND_NONE, libtcod.LEFT, charges[5])
+    if idx6 is not -1:
+        libtcod.console_set_default_foreground(panel, color.green)
+        libtcod.console_print_ex(panel, 0, 20, libtcod.BKGND_NONE, libtcod.LEFT, charges[6])
+    if idx7 is not -1:
+        libtcod.console_set_default_foreground(panel, color.gray)
+        libtcod.console_print_ex(panel, 0, 23, libtcod.BKGND_NONE, libtcod.LEFT, charges[7])
+

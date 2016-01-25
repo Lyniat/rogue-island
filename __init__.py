@@ -5,7 +5,6 @@ import textwrap
 import thread
 from ctypes import c_int
 from multiprocessing import Value
-
 import libtcodpy as libtcod
 from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars
 
@@ -30,6 +29,8 @@ PANEL_HEIGHT = 7
 PANEL_HEIGHT_TOP = 1
 PANEL_BOTTOM = SCREEN_HEIGHT - PANEL_HEIGHT
 PANEL_TOP = 0
+SIDE_PANEL_WIDTH = SCREEN_WIDTH - VISUAL_WIDTH
+SIDE_PANEL_HEIGHT = SCREEN_HEIGHT
 MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
@@ -45,16 +46,18 @@ MAX_MONSTERS = 20
 # GUI panel at the bottom/top of the screen
 bottom_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 top_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT_TOP)
+side_panel = libtcod.console_new(SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT)
 numClicks = 0
 time = 1
-
+mouse = libtcod.Mouse()
+key = libtcod.Key()
+player_action = 'not passed'
 game_status = 1  # 0 = generator, 1 = game, 2 = menu, 3 = intro
-
-game_msgs = []
 
 shared_percent = Value(c_int)
 
 objects = []
+
 
 class Info_text:
     def __init__(self, value):
@@ -118,15 +121,26 @@ class Object:
         distance = math.sqrt(dx ** 2 + dy ** 2)
         dx = int(round(dx / distance))
         dy = int(round(dy / distance))
-        self.move(dx, dy)
+        if math.fabs(dx) > math.fabs(dy):
+            self.move(dx, 0)
+        elif math.fabs(dx) < math.fabs(dy):
+            self.move(0, dy)
+        else:
+            if random.randint(0, 1) == 1:
+                self.move(dx, 0)
+            else:
+                self.move(0, dy)
 
-    def distance_to(self, other):
+    def distance_to_object(self, other):
         dx = other.x - self.x
         dy = other.y - self.y
         return math.sqrt(dx ** 2 + dy ** 2)
 
+    def distance_to_tile(self, x, y):
+        return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
 
-"""
+
+""" WIP: A* algorithm - at the moment helluva slow thing
     def move_astar(self, target):
         # This creates a 'minimap' of the visible screen
         fov = libtcod.map_new(VISUAL_WIDTH, VISUAL_HEIGHT)
@@ -247,11 +261,29 @@ def place_objects():
             objects.append(monster)
 
 
+def target_tile(max_range=None):
+    # return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
+    global key, mouse
+    while True:
+        # render the screen. this erases the inventory and shows the names of objects under the mouse.
+        libtcod.console_flush()
+        libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
+        render_all()
+
+        (x, y) = (mouse.cx, mouse.cy)
+
+        if mouse.lbutton_pressed:
+            return (x, y)
+
+        if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
+            return (None, None)  # cancel if the player right-clicked or pressed Escape
+
+
 class monsterAi():
     def take_turn(self):
         monster = self.owner
         if monster.entclass.stunned == 0:
-            if monster.distance_to(player) >= 2:
+            if monster.distance_to_object(player) >= 2:
                 monster.move_towards(player)
             elif player.entclass.hp > 0:
                 monster.entclass.attack(player)
@@ -336,6 +368,8 @@ def render_all():
     libtcod.console_clear(top_panel)
     libtcod.console_set_default_background(bottom_panel, libtcod.black)
     libtcod.console_clear(bottom_panel)
+    libtcod.console_set_default_background(side_panel, libtcod.black)
+    libtcod.console_clear(side_panel)
 
     # print the game messages, one line at a time
     y = 1
@@ -345,10 +379,12 @@ def render_all():
         y += 1
 
     # show the player's stats
-    gui.render_hp_bar(bottom_panel, 1, 1, BAR_WIDTH, 'HP', player.entclass.hp, player.entclass.max_hp,
-                      libtcod.light_red, libtcod.darker_red)
+    gui.render_hp_bar(bottom_panel, 1, 1, BAR_WIDTH, 'HP', player.entclass.hp, player.entclass.max_hp)
     # shows the time
-    gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, calc_time(), color.blue)
+    calc_time()
+    gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, time, color.blue)
+    # perk charge
+    gui.perk_charge(side_panel, 0, 0, 0, 0, 0, 0, 0, 0)
     # render_bar(top_panel, 1, 1, BAR_WIDTH_TOP, 'TIME', calcTime(), 24,
     #          libtcod.light_yellow, libtcod.dark_yellow)
     # display names of objects under the mouse
@@ -358,20 +394,19 @@ def render_all():
     # blit the contents of "panel" to the root console
     libtcod.console_blit(bottom_panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_BOTTOM)
     libtcod.console_blit(top_panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT_TOP, 0, 0, PANEL_TOP)
+    libtcod.console_blit(side_panel, 0, 0, SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT, 0, VISUAL_WIDTH, 0)
 
 
 def calc_time():
     global time
     global numClicks
 
-    if numClicks % 2 == 0:
+    if numClicks % 2 == 0 and numClicks is not 0:
         time += 1
-    # time = numKlicks
-    if time > BAR_WIDTH_TOP - 1:
+
+    if time is BAR_WIDTH_TOP:
         time = 0
         numClicks = 0
-
-    return time
 
 
 def message(new_msg, color_msg=libtcod.white):
@@ -437,6 +472,12 @@ def game_over(player):
 
 def monster_death(monster):
     message(str(monster.name) + ' is dead!')
+    # Vampirism Perk
+    if player.entclass.perks[1][5] == 1:
+        player.entclass.hp += int(monster.entclass.hp / 2)
+    # Soul Reaver Stack Gain
+    if player.entclass.perks[2][5] == 1:
+        player.entclass.souls += 1
     monster.char = '%'
     monster.color = libtcod.dark_red
     monster.blocks = False
@@ -445,50 +486,73 @@ def monster_death(monster):
     monster.name = 'remains of ' + monster.name
 
 
+def closest_monster(max_range):
+    # find closest enemy, up to a maximum range, and in the player's FOV
+    closest_enemy = None
+    closest_dist = max_range + 1  # start with (slightly more than) maximum range
+
+    for object in objects:
+        if object.entclass and not object == player:  # and libtcod.map_is_in_fov(fov_map, object.x, object.y)
+            # calculate distance between this object and the player
+            dist = player.distance_to_object(object)
+            if dist < closest_dist:
+                closest_enemy = object
+                closest_dist = dist
+    return closest_enemy
+
+
 def handle_keys():
     global numClicks
     # key = libtcod.console_check_for_keypress()  #real-time
     key = libtcod.console_wait_for_keypress(True)  # turn-based
-
+    global player_action
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         # Alt+Enter: toggle fullscreen
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-
+        player_action = 'passed'
     elif key.vk == libtcod.KEY_ESCAPE:
         return True  # exit game
-
+        player_action = 'passed'
     if game_status == 1:
         if libtcod.console_is_key_pressed(libtcod.KEY_UP):
             attackmove(0, -1)
             globalvars.player_y = player.y
+            player.entclass.update_stats(time=numClicks)
             numClicks += 1
+            player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_DOWN):
             attackmove(0, 1)
             globalvars.player_y = player.y
+            player.entclass.update_stats(time=numClicks)
             numClicks += 1
+            player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_LEFT):
             attackmove(-1, 0)
             globalvars.player_x = player.x
+            player.entclass.update_stats(time=numClicks)
             numClicks += 1
+            player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_RIGHT):
             attackmove(1, 0)
             globalvars.player_x = player.x
+            player.entclass.update_stats(time=numClicks)
             numClicks += 1
+            player_action = 'not passed'
         else:
             # return 'player_pass'
             key_char = chr(key.c)
-
+            player_action = 'passed'
             if key_char == 'p' and not libtcod.console_is_key_pressed(key):
                 # show in-game menu
                 chosen_option = gui.perk_menu('Press the key next to the perk you want to use.\n', 1, 0)
                 if chosen_option is 0:
-                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+                    chosen_perk = gui.perk_menu('FORTITUDE.\n', 0, 1)
 
                 elif chosen_option is 1:
-                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+                    chosen_perk = gui.perk_menu('CUNNING.\n', 0, 1)
 
                 elif chosen_option is 2:
-                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+                    chosen_perk = gui.perk_menu('SAVAGERY.\n', 0, 1)
 
             if key_char == 'i' and not libtcod.console_is_key_pressed(key):
                 # show black screen in game
@@ -497,6 +561,9 @@ def handle_keys():
             if key_char == 'x' and not libtcod.console_is_key_pressed(key):
                 gui.save_game(player, objects)
                 message('Game saved!')
+
+            if key_char == 'd' and not libtcod.console_is_key_pressed(key):  # debug key
+                pass
 
 
 def load_tiles():
@@ -585,6 +652,7 @@ player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.whit
 game_status = main_menu()
 global map
 global tile_list
+global game_msgs
 tile_list = []
 
 if game_status == 0:
@@ -592,6 +660,9 @@ if game_status == 0:
     generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
 
 if game_status == 1:
+    game_msgs = []
+    message('Welcome to Rogue Island!', color.yellow)
+
     load_tiles()
     map = loader.load_map()
 
@@ -601,8 +672,6 @@ if game_status == 1:
     globalvars.player_y = player.y
 
     make_visual_map()
-
-    player_action = None
 
 while not libtcod.console_is_window_closed():
 
@@ -625,11 +694,12 @@ while not libtcod.console_is_window_closed():
 
         # handle keys and exit game if needed
         exit = handle_keys()
-        print 'pass'
-        if game_status == 1 and player_action != 'player_pass':
+
+        if game_status == 1 and player_action == 'not passed':
             for object in objects:
                 if object.ai:
                     object.ai.take_turn()
+                    print 'pass'
     # Intro
     if game_status == 3:
         img = libtcod.image_load("data/images/intro_2.png")
