@@ -47,7 +47,9 @@ bottom_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 top_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT_TOP)
 numClicks = 0
 time = 1
-
+mouse = libtcod.Mouse()
+key = libtcod.Key()
+player_action = 'not passed'
 game_status = 1  # 0 = generator, 1 = game, 2 = menu, 3 = intro
 
 game_msgs = []
@@ -55,6 +57,7 @@ game_msgs = []
 shared_percent = Value(c_int)
 
 objects = []
+
 
 class Info_text:
     def __init__(self, value):
@@ -118,15 +121,26 @@ class Object:
         distance = math.sqrt(dx ** 2 + dy ** 2)
         dx = int(round(dx / distance))
         dy = int(round(dy / distance))
-        self.move(dx, dy)
+        if math.fabs(dx) > math.fabs(dy):
+            self.move(dx, 0)
+        elif math.fabs(dx) < math.fabs(dy):
+            self.move(0, dy)
+        else:
+            if random.randint(0, 1) == 1:
+                self.move(dx, 0)
+            else:
+                self.move(0, dy)
 
-    def distance_to(self, other):
+    def distance_to_object(self, other):
         dx = other.x - self.x
         dy = other.y - self.y
         return math.sqrt(dx ** 2 + dy ** 2)
 
+    def distance_to_tile(self, x, y):
+        return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
 
-"""
+
+""" WIP: A* algorithm - at the moment helluva slow thing
     def move_astar(self, target):
         # This creates a 'minimap' of the visible screen
         fov = libtcod.map_new(VISUAL_WIDTH, VISUAL_HEIGHT)
@@ -247,11 +261,28 @@ def place_objects():
             objects.append(monster)
 
 
+def target_tile(max_range=None):
+    # return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
+    global key, mouse
+    while True:
+        # render the screen. this erases the inventory and shows the names of objects under the mouse.
+        libtcod.console_flush()
+        libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
+        render_all()
+
+        (x, y) = (mouse.cx, mouse.cy)
+
+        if mouse.lbutton_pressed:
+            return (x, y)
+
+        if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
+            return (None, None)  #cancel if the player right-clicked or pressed Escape
+
 class monsterAi():
     def take_turn(self):
         monster = self.owner
         if monster.entclass.stunned == 0:
-            if monster.distance_to(player) >= 2:
+            if monster.distance_to_object(player) >= 2:
                 monster.move_towards(player)
             elif player.entclass.hp > 0:
                 monster.entclass.attack(player)
@@ -437,6 +468,12 @@ def game_over(player):
 
 def monster_death(monster):
     message(str(monster.name) + ' is dead!')
+    # Vampirism Perk
+    if player.entclass.perks[1][5] == 1:
+        player.entclass.hp += int(monster.entclass.hp / 2)
+    # Soul Reaver Stack Gain
+    if player.entclass.perks[2][5] == 1:
+        player.entclass.souls += 1
     monster.char = '%'
     monster.color = libtcod.dark_red
     monster.blocks = False
@@ -445,50 +482,73 @@ def monster_death(monster):
     monster.name = 'remains of ' + monster.name
 
 
+def closest_monster(max_range):
+    # find closest enemy, up to a maximum range, and in the player's FOV
+    closest_enemy = None
+    closest_dist = max_range + 1  # start with (slightly more than) maximum range
+
+    for object in objects:
+        if object.entclass and not object == player:  # and libtcod.map_is_in_fov(fov_map, object.x, object.y)
+            # calculate distance between this object and the player
+            dist = player.distance_to_object(object)
+            if dist < closest_dist:
+                closest_enemy = object
+                closest_dist = dist
+    return closest_enemy
+
+
 def handle_keys():
     global numClicks
     # key = libtcod.console_check_for_keypress()  #real-time
     key = libtcod.console_wait_for_keypress(True)  # turn-based
-
+    global player_action
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         # Alt+Enter: toggle fullscreen
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-
+        player_action = 'passed'
     elif key.vk == libtcod.KEY_ESCAPE:
         return True  # exit game
-
+        player_action = 'passed'
     if game_status == 1:
         if libtcod.console_is_key_pressed(libtcod.KEY_UP):
             attackmove(0, -1)
             globalvars.player_y = player.y
+            player.entclass.update_stats(time=numClicks)
             numClicks += 1
+            player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_DOWN):
             attackmove(0, 1)
             globalvars.player_y = player.y
+            player.entclass.update_stats(time=numClicks)
             numClicks += 1
+            player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_LEFT):
             attackmove(-1, 0)
             globalvars.player_x = player.x
+            player.entclass.update_stats(time=numClicks)
             numClicks += 1
+            player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_RIGHT):
             attackmove(1, 0)
             globalvars.player_x = player.x
+            player.entclass.update_stats(time=numClicks)
             numClicks += 1
+            player_action = 'not passed'
         else:
             # return 'player_pass'
             key_char = chr(key.c)
-
+            player_action = 'passed'
             if key_char == 'p' and not libtcod.console_is_key_pressed(key):
                 # show in-game menu
                 chosen_option = gui.perk_menu('Press the key next to the perk you want to use.\n', 1, 0)
                 if chosen_option is 0:
-                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+                    chosen_perk = gui.perk_menu('FORTITUDE.\n', 0, 1)
 
                 elif chosen_option is 1:
-                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+                    chosen_perk = gui.perk_menu('CUNNING.\n', 0, 1)
 
                 elif chosen_option is 2:
-                    chosen_perk = gui.perk_menu('Perk Menu with 10 Options.\n', 0, 1)
+                    chosen_perk = gui.perk_menu('SAVAGERY.\n', 0, 1)
 
             if key_char == 'i' and not libtcod.console_is_key_pressed(key):
                 # show black screen in game
@@ -497,6 +557,9 @@ def handle_keys():
             if key_char == 'x' and not libtcod.console_is_key_pressed(key):
                 gui.save_game(player, objects)
                 message('Game saved!')
+
+            if key_char == 'd' and not libtcod.console_is_key_pressed(key):  # debug key
+                pass
 
 
 def load_tiles():
@@ -602,8 +665,6 @@ if game_status == 1:
 
     make_visual_map()
 
-    player_action = None
-
 while not libtcod.console_is_window_closed():
 
     if game_status == 0:
@@ -625,11 +686,12 @@ while not libtcod.console_is_window_closed():
 
         # handle keys and exit game if needed
         exit = handle_keys()
-        print 'pass'
-        if game_status == 1 and player_action != 'player_pass':
+
+        if game_status == 1 and player_action == 'not passed':
             for object in objects:
                 if object.ai:
                     object.ai.take_turn()
+                    print 'pass'
     # Intro
     if game_status == 3:
         img = libtcod.image_load("data/images/intro_2.png")

@@ -15,6 +15,8 @@ class entity(object):
         self.max_hp = hp + vitality * 10
         self.dmgot = 0  # dmgot stands for DoT which stands for Damage over Time. DoT isn't used because of ambiguity
         self.on_death = on_death
+        self.souls = 0
+        self.bloodlust = 0
         self.first_name = first_name
         self.name = name
         self.race = race
@@ -24,29 +26,49 @@ class entity(object):
         self.points = [0, 0]
         self.perks = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
                       [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                      [0, 1, 0, 0, 0, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 0, 0, 0, 0],
                       [0, 0, 0]]
 
     def level_up(self):
         self.points[0] += 3
         self.points[1] += 1
 
-    def update_stats(self):
+    def update_stats(self, time=None):
         self.max_hp == self.vitality * 10
         # Veteran's Scar's Perk
         if self.perks[1][0] == 1:
             self.max_hp += self.strength * 5
+        # Warmth Perk
+        if self.perks[1][3] and self.hp < self.max_hp and time is not None and 19 < time < 57:
+            self.hp += 1
+
+        # Soul Reaver Perk Decay and Gain on time
+        if self.perks[2][5] == 1:
+            if time == 1:
+                self.souls += 1
+            elif time == 37:
+                self.souls -= 5
+            if self.souls < 0:
+                self.souls = 0
 
     def take_damage(self, source, dmg):
+        # Warmonger Perk chance to fall in bloodlust
+        if self.perks[2][6] == 1 and random.randint(0, 100) <= 10 and self.bloodlust == 0:
+            self.bloodlust = 5
         if dmg > 0:
+            # Warmonger Perk Bloodlust incoming damage increase
+            if self.bloodlust > 0:
+                dmg *= 2
             # Ignore the Pain perk chance to transform into dot
             if self.perks[2][0] == 1 and random.randint(0, 100) <= 20:
                 self.dmgot = dmg
             else:
                 self.hp -= dmg
             # deflect perk
-            if self.perks[2][1] == 1:
+            if self.perks[2][1] == 1 and random.randint(0, 1) == 1:
                 source.take_damage(dmg)
+            if self.perks[0][8] == 1:
+                source.take_damage(self.agility)
         # Ignore the Pain perk ongoing DoT
         if self.dmgot > 0:
             if self.dmgot % 3 == 0:
@@ -64,35 +86,52 @@ class entity(object):
             if function is not None:
                 function(self.owner)
 
-    def attack(self, target):
-        if self.agility > target.entclass.agility:
-            damage = self.strength * 2 - target.entclass.strength
+    def attack(self, target, time=None):
+        if random.randint(0, self.agility) > random.randint(0, target.entclass.agility):
+            damage = self.strength * random.randint(1, self.intelligence) - target.entclass.strength
         else:
             damage = self.strength - target.entclass.strength
+
         # Ram Perk
         if self.perks[1][0] == 1:
             damage += self.vitality
+        # Soldier Perk
+        if self.perks[0][7] == 1:
+            damage += self.agility
+        # Paladin Perk
+        if self.perks[0][3] == 1 and 19 < time < 57:
+            damage += self.strength
+        # Rogue Perk
+        if self.perks[0][3] == 1 and not 19 < time < 57:
+            damage += self.agility
+
+        # Dungeon Basher Perk
         if self.perks[2][1] == 1:
             x = target.x - globalvars.player_x
             y = target.y - globalvars.player_y
 
             if y == -1 and globalvars.monster_proximity_block[0] == 1:
                 damage *= 2
-                print 'double, top'
             elif x == 1 and globalvars.monster_proximity_block[1] == 1:
                 damage *= 2
-                print 'double, right'
             elif y == 1 and globalvars.monster_proximity_block[2] == 1:
                 damage *= 2
-                print 'double, bot'
             elif x == -1 and globalvars.monster_proximity_block[3] == 1:
                 damage *= 2
-                print 'double, left'
             else:
-                target.move(2*x, 2*y)
-                print 'moved'
+                target.move(2 * x, 2 * y)
+
+        # Soulreaver Perk damage addition
+        if self.perks[2][5] == 1:
+            damage += self.souls
+        # Stunning Perk
         if self.perks[1][1] == 1 and random.randint(0, 100) <= 20:
             target.entclass.stunned = 1
+
+        # Bloodlust Perk
+        if self.bloodlust > 0:
+            damage *= 4
+            self.bloodlust -= 1
         if damage > 0:
             target.entclass.take_damage(damage)
         else:
@@ -123,12 +162,13 @@ Charge:             You instantly charge to your enemy and attack him once. Must
 XDeflect:            You sometimes deflect incoming damage, sharing the wounds with your foe.
 Hurl:               You throw your enemy. He takes massive damage in height of ten times your vitality, and appears
                     randomly somewhere within 3 tiles of you again.
-Paladin:            You are a paragon of good deeds. You deal higher damage at day, especially if against innately
+XPaladin:            You are a paragon of good deeds. You deal higher damage at day, especially if against innately
                     evil monsters.
-Warmth:             You bath in the warmth of sunrays, slowly regenerating life.
+XWarmth:             You bath in the warmth of sunrays, slowly regenerating life.
 Word of Power:      You speak a Word of Power, damaging all enemies in a large radius in height of your combined
                     intelligence, strength and vitality.
-Arcane Missiles:    You fire three arcane missiles at single enemy from afar. You gain 3 charges every day, no maximum.
+Arcane Missiles:    You fire three arcane missiles at the nearest enemy from afar. You gain 3 charges every day, no
+                    maximum.
                     Deals damage in height of your intelligence.
                     Regains the charge if it kills the enemy.
 Fireball:           Throw a powerful fireball, damaging all foes in a little radius around the impact itself.
@@ -136,25 +176,25 @@ Fireball:           Throw a powerful fireball, damaging all foes in a little rad
                     You gain 3 charges every day, no maximum.
 Frozen Tomb:        Freeze a single foe until its death. It suffers damage in height of your intelligence per turn and
                     can't move. Gain one charge each day, no maximum.
-Rogue:              You perform best in the shadows and the cloak of the night. You deal additional damage against all
+XRogue:              You perform best in the shadows and the cloak of the night. You deal additional damage against all
                     foes when it is night.
-Vampirism:          You feast on your enemies, regaining a tenth of your enemies health as soon as they die.
-Soul Reaver:        You posses the power to collect the souls of the dead, gaining one damage per attack for every
-                    soul you have collected. You lose 1 soul at midnight, 5 at midday.
-Soldier:            Your physical form is at its prime. Your agility now influences your damage directly, in addition
+XVampirism:          You feast on your enemies, regaining a tenth of your enemies health as soon as they die.
+XSoul Reaver:        You posses the power to collect the souls of the dead, gaining one damage per attack for every
+                    soul you have collected. You gain one soul at midnight, but lose 5 at midday.
+XSoldier:           Your physical form is at its prime. Your agility now influences your damage directly, in addition
                     to your innate chance to critically strike.
 Combatant:          The amount of potions you've consumed made your direly need the potions. You now lose 1 Hp per
                     round, but always gain half your maximum life back instead of flat 50.
-Warmonger:          Each time you are attacked, you have chance to fall into bloodlust. Bloodlust makes you suffer
-                    double damage for 5 rounds, but deal quadruple damage.
+XWarmonger:          Each time you are attacked, you have chance to fall into bloodlust. Bloodlust makes you suffer
+                    double damage until your thirst for blood is quenched, but deal quadruple damage for five attacks.
 Second Strike:      You can attack a single enemy once without retaliation. Gains one charge every 5 rounds, up to a
                     maximum of 1.
 Multistrike:        You have a small chance to strike all enemies around you. If there is only one foe, you pierce its
                     armor, dealing double damage instead.
 Enormous Blast:     You stomp the ground with full force, dealing quadruple damage directly around you, double a tile
                     further, and normal damage another tile further.
-First Strike:       Each time you are attacked, there is a chance you simultaneously retaliate and deal half your
-                    normal damage.
+XFirst Strike:       Each time you are attacked, there is a chance you simultaneously retaliate and deal damagein height
+                    of your agility.
 Weapon Throw:       Throw your weapon (and magically retrieve it again) dealing normal damage without chance of
                     retaliation. Gain 3 charges per day, no maximum.
 Flurry:             Your attacks become one flash. On your next attack, you have a chance of 100% to attack a second
