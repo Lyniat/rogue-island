@@ -276,8 +276,12 @@ def target_tile(max_range=None):
             return (x, y)
 
         if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
+<<<<<<< HEAD
             return (None, None)  # cancel if the player right-clicked or pressed Escape
 
+=======
+            return (None, None)  #cancel if the player right-clicked or pressed Escape
+>>>>>>> 23aabad1c951f0fa9ced1319ac9a3cb8cdb3f657
 
 class monsterAi():
     def take_turn(self):

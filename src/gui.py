@@ -170,8 +170,12 @@ def perk_menu(header, options1, options2):
     #    options = [item.name for item in inventory]
     options = []
     if options1:
+<<<<<<< HEAD
         options = ['Fortitude - Strengthens your durability', 'Cunning - Provides Utility based on Intelligence',
                    'Savagery - Improves your damage']
+=======
+        options = ['Fortitude - Strengthens your durability', 'Cunning - Provides Utility based on Intelligence', 'Savagery - Improves your damage']
+>>>>>>> 23aabad1c951f0fa9ced1319ac9a3cb8cdb3f657
     elif options2:
         options = ['Opt 1', 'Opt 2', 'Opt 3', 'Opt 4', 'Opt 5', 'Opt 6', 'Opt 7', 'Opt 8', 'Opt 9', 'Opt 10']
 
