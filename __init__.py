@@ -5,7 +5,6 @@ import textwrap
 import thread
 from ctypes import c_int
 from multiprocessing import Value
-
 import libtcodpy as libtcod
 from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars
 
@@ -30,6 +29,8 @@ PANEL_HEIGHT = 7
 PANEL_HEIGHT_TOP = 1
 PANEL_BOTTOM = SCREEN_HEIGHT - PANEL_HEIGHT
 PANEL_TOP = 0
+SIDE_PANEL_WIDTH = SCREEN_WIDTH - VISUAL_WIDTH
+SIDE_PANEL_HEIGHT = SCREEN_HEIGHT
 MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
@@ -45,14 +46,13 @@ MAX_MONSTERS = 20
 # GUI panel at the bottom/top of the screen
 bottom_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 top_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT_TOP)
+side_panel = libtcod.console_new(SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT)
 numClicks = 0
 time = 1
 mouse = libtcod.Mouse()
 key = libtcod.Key()
 player_action = 'not passed'
 game_status = 1  # 0 = generator, 1 = game, 2 = menu, 3 = intro
-
-game_msgs = []
 
 shared_percent = Value(c_int)
 
@@ -276,7 +276,8 @@ def target_tile(max_range=None):
             return (x, y)
 
         if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
-            return (None, None)  #cancel if the player right-clicked or pressed Escape
+            return (None, None)  # cancel if the player right-clicked or pressed Escape
+
 
 class monsterAi():
     def take_turn(self):
@@ -367,6 +368,8 @@ def render_all():
     libtcod.console_clear(top_panel)
     libtcod.console_set_default_background(bottom_panel, libtcod.black)
     libtcod.console_clear(bottom_panel)
+    libtcod.console_set_default_background(side_panel, libtcod.black)
+    libtcod.console_clear(side_panel)
 
     # print the game messages, one line at a time
     y = 1
@@ -376,10 +379,12 @@ def render_all():
         y += 1
 
     # show the player's stats
-    gui.render_hp_bar(bottom_panel, 1, 1, BAR_WIDTH, 'HP', player.entclass.hp, player.entclass.max_hp,
-                      libtcod.light_red, libtcod.darker_red)
+    gui.render_hp_bar(bottom_panel, 1, 1, BAR_WIDTH, 'HP', player.entclass.hp, player.entclass.max_hp)
     # shows the time
-    gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, calc_time(), color.blue)
+    calc_time()
+    gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, time, color.blue)
+    # perk charge
+    gui.perk_charge(side_panel, 0, 0, 0, 0, 0, 0, 0, 0)
     # render_bar(top_panel, 1, 1, BAR_WIDTH_TOP, 'TIME', calcTime(), 24,
     #          libtcod.light_yellow, libtcod.dark_yellow)
     # display names of objects under the mouse
@@ -389,20 +394,19 @@ def render_all():
     # blit the contents of "panel" to the root console
     libtcod.console_blit(bottom_panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_BOTTOM)
     libtcod.console_blit(top_panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT_TOP, 0, 0, PANEL_TOP)
+    libtcod.console_blit(side_panel, 0, 0, SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT, 0, VISUAL_WIDTH, 0)
 
 
 def calc_time():
     global time
     global numClicks
 
-    if numClicks % 2 == 0:
+    if numClicks % 2 == 0 and numClicks is not 0:
         time += 1
-    # time = numKlicks
-    if time > BAR_WIDTH_TOP - 1:
+
+    if time is BAR_WIDTH_TOP:
         time = 0
         numClicks = 0
-
-    return time
 
 
 def message(new_msg, color_msg=libtcod.white):
@@ -648,6 +652,7 @@ player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.whit
 game_status = main_menu()
 global map
 global tile_list
+global game_msgs
 tile_list = []
 
 if game_status == 0:
@@ -655,6 +660,9 @@ if game_status == 0:
     generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
 
 if game_status == 1:
+    game_msgs = []
+    message('Welcome to Rogue Island!', color.yellow)
+
     load_tiles()
     map = loader.load_map()
 
