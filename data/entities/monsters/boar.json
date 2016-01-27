@@ -1,0 +1,34 @@
+{
+	"Name" : "Boar",
+	"Char" : 65,
+	"Visual Representation" : b,
+	"Color" : ,
+	"Biomes" : 2,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 30,
+		"Level" : 2,
+		"Strength" : 4,
+		"Agility" : 3,
+		"Intelligence" : 2,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

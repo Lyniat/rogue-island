@@ -1,0 +1,35 @@
+{
+	"ID" : 19,
+	"Name" : "Kobold",
+	"Char" : 75,
+	"Visual Representation" : K,
+	"Color" : ,
+	"Biomes" : 12,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 40,
+		"Level" : 3,
+		"Strength" : 2,
+		"Agility" : 4,
+		"Intelligence" : 5,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

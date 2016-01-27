@@ -1,0 +1,35 @@
+{
+	"ID" : 5,
+	"Name" : "Maggot",
+	"Char" : 77,
+	"Visual Representation" : M,
+	"Color" : white,
+	"Biomes" : 10,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 30,
+		"Level" : 3,
+		"Strength" : 4,
+		"Agility" : 2,
+		"Intelligence" : 1,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

@@ -1,0 +1,34 @@
+{
+	"Name" : "Ogre",
+	"Char" : 79,
+	"Visual Representation" : O,
+	"Color" : ,
+	"Biomes" : 5,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 80,
+		"Level" : 5,
+		"Strength" : 8,
+		"Agility" : 3,
+		"Intelligence" : 1,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

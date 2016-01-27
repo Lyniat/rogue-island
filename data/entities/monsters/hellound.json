@@ -1,0 +1,35 @@
+{
+
+	"Name" : "Hellhound",
+	"Char" : 72,
+	"Visual Representation" : H,
+	"Color" : ,
+	"Biomes" : 14,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 60,
+		"Level" : 4,
+		"Strength" : 5,
+		"Agility" : 6,
+		"Intelligence" : 3,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

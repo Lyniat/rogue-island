@@ -1,0 +1,34 @@
+{
+	"Name" : "Python",
+	"Char" : 80,
+	"Visual Representation" : P,
+	"Color" : ,
+	"Biomes" : 5,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 70,
+		"Level" : 5,
+		"Strength" : 4,
+		"Agility" : 6,
+		"Intelligence" : 3,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

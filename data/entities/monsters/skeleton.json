@@ -1,0 +1,34 @@
+{
+	"Name" : "Skeleton",
+	"Char" : 83,
+	"Visual Representation" : S,
+	"Color" : ,
+	"Biomes" : 4,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 60,
+		"Level" : 4,
+		"Strength" : 4,
+		"Agility" : 3,
+		"Intelligence" : 3,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

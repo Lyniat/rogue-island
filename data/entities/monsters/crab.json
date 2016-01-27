@@ -1,0 +1,35 @@
+{
+	"ID" : 12,
+	"Name" : "Slug",
+	"Char" : 83,
+	"Visual Representation" : S,
+	"Color" : ,
+	"Biomes" : 10,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 100,
+		"Level" :3 ,
+		"Strength" : 3,
+		"Agility" : 1,
+		"Intelligence" : 2,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

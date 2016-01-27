@@ -1,0 +1,34 @@
+{
+	"Name" : "Ghoul",
+	"Char" : 71,
+	"Visual Representation" : G,
+	"Color" : ,
+	"Biomes" : 5,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 60,
+		"Level" : 3,
+		"Strength" : 4,
+		"Agility" : 3,
+		"Intelligence" : 1,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

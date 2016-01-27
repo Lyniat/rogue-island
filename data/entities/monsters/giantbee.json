@@ -1,0 +1,34 @@
+{
+	"Name" : "GiantBee",
+	"Char" : 71,
+	"Visual Representation" : G,
+	"Color" : ,
+	"Biomes" : 16,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 50,
+		"Level" : 5,
+		"Strength" : 6,
+		"Agility" : 6,
+		"Intelligence" : 3,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

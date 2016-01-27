@@ -1,0 +1,35 @@
+{
+
+	"Name" : "SenatorBee",
+	"Char" : 83,
+	"Visual Representation" : S,
+	"Color" : ,
+	"Biomes" : 16,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 90,
+		"Level" : 4,
+		"Strength" : 4,
+		"Agility" : 4,
+		"Intelligence" : 4,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

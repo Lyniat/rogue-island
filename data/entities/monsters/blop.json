@@ -1,0 +1,34 @@
+{
+	"Name" : "Blop",
+	"Char" : 66,
+	"Visual Representation" : B,
+	"Color" : ,
+	"Biomes" : 12,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 60,
+		"Level" : 3,
+		"Strength" : 2,
+		"Agility" : 7,
+		"Intelligence" : 3,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

@@ -1,0 +1,34 @@
+{
+	"Name" : "Polarbear",
+	"Char" : ,
+	"Visual Representation" : P,
+	"Color" : 80,
+	"Biomes" : 16,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 75,
+		"Level" : 4,
+		"Strength" : 5,
+		"Agility" : 4,
+		"Intelligence" : 3,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}

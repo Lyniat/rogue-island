@@ -1,0 +1,34 @@
+{
+	"Name" : "Orc",
+	"Char" : 79,
+	"Visual Representation" : O,
+	"Color" : ,
+	"Biomes" : 14,
+	"Behavior" : ,
+	"Loot" :[
+		{"ID" : ,
+		"Name" : ,
+		"Droprate" : ,
+		
+		},{
+		}
+	]
+	"Abilities" :[
+		{
+		},{
+		}
+	]
+	"Attributes" : [
+		{
+		"HP" : 90,
+		"Level" : 8,
+		"Strength" : 8,
+		"Agility" : 7,
+		"Intelligence" : 5,
+		"on_death" : ,
+		"Attack" : ,
+		"Defence" : ,
+		},{
+		}
+	]
+	}
