@@ -3,7 +3,7 @@ import random
 import globalvars
 
 
-class entity(object):
+class PlayerEntity(object):
     def __init__(self, hp, strength, agility, intelligence, vitality, first_name, name, race, gender, on_death=None):
         self.agility = agility
         self.strength = strength
@@ -13,7 +13,7 @@ class entity(object):
         self.xp = 0
         self.level = 1
         self.max_hp = hp + vitality * 10
-        self.dmgot = 0  # dmgot stands for DoT which stands for Damage over Time. DoT isn't used because of ambiguity
+        self.dmgot = 0  # dmgot stands for DoT which stands for Damage over Time. dot isn't used because of ambiguity
         self.on_death = on_death
         self.souls = 0
         self.bloodlust = 0
@@ -46,41 +46,57 @@ class entity(object):
         if self.perks[2][5] == 1:
             if time == 1:
                 self.souls += 1
+                globalvars.queued_messages.append(
+                    'It is midnight. You gain one soul. You now have ' + str(self.souls) + ' souls.')
             elif time == 37:
                 self.souls -= 5
+                globalvars.queued_messages.append(
+                    'It is midnight. You lose five souls. You now have ' + str(self.souls) + ' souls.')
             if self.souls < 0:
                 self.souls = 0
 
     def take_damage(self, source, dmg):
         # Warmonger Perk chance to fall in bloodlust
         if self.perks[2][6] == 1 and random.randint(0, 100) <= 10 and self.bloodlust == 0:
+            globalvars.queued_messages.append('WAAAAAAAAAR! I NEED BLOOD!')
             self.bloodlust = 5
         if dmg > 0:
             # Warmonger Perk Bloodlust incoming damage increase
             if self.bloodlust > 0:
                 dmg *= 2
-            # Ignore the Pain perk chance to transform into dot
-            if self.perks[2][0] == 1 and random.randint(0, 100) <= 20:
-                self.dmgot = dmg
-            else:
-                self.hp -= dmg
             # deflect perk
             if self.perks[2][1] == 1 and random.randint(0, 1) == 1:
                 source.take_damage(dmg)
+                globalvars.queued_messages.append('You successfully retaliate your enemy\'s attack!')
+            # Ignore the Pain perk chance to transform into dot
+            if self.perks[2][0] == 1 and random.randint(0, 100) <= 20:
+                self.dmgot = dmg
+                globalvars.queued_messages.append('You are attacked, but you ignore the pain.')
+            else:
+                self.hp -= dmg
+                globalvars.queued_messages.append('You take ' + str(dmg) + ' damage.')
             if self.perks[0][8] == 1:
                 source.take_damage(self.agility)
+                globalvars.queued_messages.append(
+                    'You quickly slice against your enemy! Your enemy takes ' + str(self.agility) + ' damage.')
         # Ignore the Pain perk ongoing DoT
         if self.dmgot > 0:
             if self.dmgot % 3 == 0:
                 self.hp -= self.dmgot / 3
                 self.dmgot -= self.dmgot / 3
+                globalvars.queued_messages.append(
+                    'You start to feel the pain, and suffer ' + str(self.dmgot / 3) + ' damage.')
             elif self.dmgot % 3 >= 3:
                 self.hp -= (self.dmgot - self.dmgot % 3) / 3
                 self.dmgot -= (self.dmgot - self.dmgot % 3) / 3
+                globalvars.queued_messages.append(
+                    'You start to feel the pain, and suffer ' + str((self.dmgot - self.dmgot % 3) / 3) + ' damage.')
             else:
                 self.hp -= self.dmgot
                 self.dmgot = 0
-        # Iron Will Perk
+                globalvars.queued_messages.append(
+                    'You start to feel the pain, and suffer ' + str(self.dmgot) + ' damage. The pain wears off.')
+
         if self.hp <= 0 and self.perks[0][0] == 1 or self.hp <= -10 and self.perks[0][0] == 1:
             function = self.on_death
             if function is not None:
@@ -104,7 +120,10 @@ class entity(object):
         # Rogue Perk
         if self.perks[0][3] == 1 and not 19 < time < 57:
             damage += self.agility
-
+        # Multi Strike Perk
+        if self.perks[1][7] == 1:
+            if globalvars.monster_proximity_block[1] == 1 and globalvars.monster_proximity_block[3] == 1:
+                damage *= 2
         # Dungeon Basher Perk
         if self.perks[2][1] == 1:
             x = target.x - globalvars.player_x
@@ -127,25 +146,33 @@ class entity(object):
         # Stunning Perk
         if self.perks[1][1] == 1 and random.randint(0, 100) <= 20:
             target.entclass.stunned = 1
-
+            globalvars.queued_messages.append('You have overwhelmed your enemy, stunning it.')
         # Bloodlust Perk
         if self.bloodlust > 0:
             damage *= 4
             self.bloodlust -= 1
+            if self.bloodlust == 0:
+                globalvars.queued_messages.append('Your thirst for blood has been quenched.')
         if damage > 0:
             target.entclass.take_damage(damage)
+            globalvars.queued_messages.append('You attack your enemy for ' + str(damage) + ' damage.')
         else:
             pass
 
     # Controls the experience income; the more intelligent you are, the more experience you get.
     def xpInc(self, xp):
-        self.xp += (xp * 0.1 * int)
+        self.xp += (xp * int(self.intelligence/2))
+
+        if self.xp > 10*self.level:
+            globalvars.queued_messages.append('You have levelled up!')
+            self.level_up()
+            self.xp -= self.level * 10
 
 
 """
 Explanation for the Perk Tree:
-Iron Will	    Ram	            Charge		Paladin	        Pillager	    Rogue		    Soldier	    Second Strike	First Strike
-Veteran's Scars	Stunning	    Deflect		Warmth	        Forager	        Vampirism		Combattant	Multistrike 	Weapon Throw
+Iron Will	    Ram	            Charge		Paladin	        Arcane Missiles Rogue		    Soldier	    Second Strike	First Strike
+Veteran's Scars	Stunning	    Deflect		Warmth	        Fireball        Vampirism		Combattant	Multistrike 	Weapon Throw
 Ignore the Pain	Dungeon Basher	Hurl		Word of Power	Hand of Midas	Soulreaver		Warmonger	Enormous Blast	Flurry
 
 XIron Will:         You can now drop down to -10 health before dying, but lose 1 HP per round while below 0 HP.
@@ -158,23 +185,23 @@ XRam:               You use your massive physical form to overpower your foes.
 XStunning:           You overwhelm your enemies with such force, so that they are severely intimidated.
 XDungeon Basher:     You are knocking enemies back by one tile sometimes, if the block behind them is not blocked. If
                     it is, they take tremendous extra damage instead.
-Charge:             You instantly charge to your enemy and attack him once. Must be in sight.
+CCharge:             You instantly charge to your enemy and attack him once. Must be in sight.
 XDeflect:            You sometimes deflect incoming damage, sharing the wounds with your foe.
-Hurl:               You throw your enemy. He takes massive damage in height of ten times your vitality, and appears
+CHurl:               You throw your enemy. He takes massive damage in height of ten times your vitality, and appears
                     randomly somewhere within 3 tiles of you again.
 XPaladin:            You are a paragon of good deeds. You deal higher damage at day, especially if against innately
                     evil monsters.
 XWarmth:             You bath in the warmth of sunrays, slowly regenerating life.
-Word of Power:      You speak a Word of Power, damaging all enemies in a large radius in height of your combined
+CWord of Power:      You speak a Word of Power, damaging all enemies in a large radius in height of your combined
                     intelligence, strength and vitality.
-Arcane Missiles:    You fire three arcane missiles at the nearest enemy from afar. You gain 3 charges every day, no
+CArcane Missiles:    You fire three arcane missiles at the nearest enemy from afar. You gain 3 charges every day, no
                     maximum.
                     Deals damage in height of your intelligence.
                     Regains the charge if it kills the enemy.
-Fireball:           Throw a powerful fireball, damaging all foes in a little radius around the impact itself.
+CFireball:           Throw a powerful fireball, damaging all in a little radius around the impact itself.
                     Deals damage in height of your intelligence.
                     You gain 3 charges every day, no maximum.
-Frozen Tomb:        Freeze a single foe until its death. It suffers damage in height of your intelligence per turn and
+CFrozen Tomb:        Freeze a single foe until its death. It suffers damage in height of your intelligence per turn and
                     can't move. Gain one charge each day, no maximum.
 XRogue:              You perform best in the shadows and the cloak of the night. You deal additional damage against all
                     foes when it is night.
@@ -187,16 +214,16 @@ Combatant:          The amount of potions you've consumed made your direly need 
                     round, but always gain half your maximum life back instead of flat 50.
 XWarmonger:          Each time you are attacked, you have chance to fall into bloodlust. Bloodlust makes you suffer
                     double damage until your thirst for blood is quenched, but deal quadruple damage for five attacks.
-Second Strike:      You can attack a single enemy once without retaliation. Gains one charge every 5 rounds, up to a
+CSecond Strike:      You can attack a single enemy once without retaliation. Gains one charge every 5 rounds, up to a
                     maximum of 1.
-Multistrike:        You have a small chance to strike all enemies around you. If there is only one foe, you pierce its
-                    armor, dealing double damage instead.
-Enormous Blast:     You stomp the ground with full force, dealing quadruple damage directly around you, double a tile
-                    further, and normal damage another tile further.
+XBig Swing:          You have a small chance to take strike out, dealing double damage if there is no object or monster
+                    around your target stopping the ferocious attack.
+CEnormous Blast:     You stomp the ground with full force, dealing quadruple strength plus agility directly around you
+                    double a tile further, and normal damage another tile further.
 XFirst Strike:       Each time you are attacked, there is a chance you simultaneously retaliate and deal damagein height
                     of your agility.
-Weapon Throw:       Throw your weapon (and magically retrieve it again) dealing normal damage without chance of
+CWeapon Throw:       Throw your weapon (and magically retrieve it again) dealing normal damage without chance of
                     retaliation. Gain 3 charges per day, no maximum.
-Flurry:             Your attacks become one flash. On your next attack, you have a chance of 100% to attack a second
+CFlurry:             Your attacks become one flash. On your next attack, you have a chance of 100% to attack a second
                     time for full damage, and half the previous chance again and again until you ultimately fail to hit.
 """

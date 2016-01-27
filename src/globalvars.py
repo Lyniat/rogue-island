@@ -10,3 +10,7 @@ player_y = 0
 
 # blocked surroundings of last monster attacked; first outer, then inner ring; order: up, right, down, left (clockwise)
 monster_proximity_block = [0, 0, 0, 0]
+
+# queued messages that are given from playercharacter.py and executed in __init__
+
+queued_messages = []

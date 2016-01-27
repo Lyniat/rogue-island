@@ -7,6 +7,7 @@ class monster(object):
         self.intelligence = intelligence
         self.on_death = on_death
         self.stunned = 0
+        self.frozentomb = 0
 
     def take_damage(self, dmg):
         if dmg > 0:

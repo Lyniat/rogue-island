@@ -5,6 +5,7 @@ import textwrap
 import thread
 from ctypes import c_int
 from multiprocessing import Value
+
 import libtcodpy as libtcod
 from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars
 
@@ -12,7 +13,7 @@ from src import color, island_generator, loader, nonplayercharacter, playerchara
 SCREEN_WIDTH = 90
 SCREEN_HEIGHT = 65
 
-FONT_SIZE = 12  # 8 = small, 12 = normal, 16 = big
+FONT_SIZE = 8  # 8 = small, 12 = normal, 16 = big
 
 # size of the map
 MAP_SIZE = 512
@@ -53,6 +54,7 @@ mouse = libtcod.Mouse()
 key = libtcod.Key()
 player_action = 'not passed'
 game_status = 1  # 0 = generator, 1 = game, 2 = menu, 3 = intro
+fov_recompute = True
 
 shared_percent = Value(c_int)
 
@@ -173,7 +175,6 @@ class Object:
                 self.x = x
                 self.y = y
         else:
-            print 'hm'
             self.move_towards(target.x, target.y)
 """
 
@@ -193,6 +194,10 @@ class Player(Object):
 
 
 def attackmove(dx, dy):
+    # sun status
+    global numClicks
+    numClicks += 1
+
     # the coordinates the player is moving to/attacking
     x = player.x + dx
     y = player.y + dy
@@ -207,20 +212,17 @@ def attackmove(dx, dy):
     # attack if target found, move otherwise - first proximity block is checked in case perk Dungeon Basher is taken
 
     if target is not None:
-
-        if is_blocked(target.x - 1, target.y):
-            globalvars.monster_proximity_block[3] = 1
-        if is_blocked(target.x + 1, target.y):
-            globalvars.monster_proximity_block[1] = 1
-        if is_blocked(target.x, target.y - 1):
-            globalvars.monster_proximity_block[0] = 1
-        if is_blocked(target.x, target.y + 1):
-            globalvars.monster_proximity_block[2] = 1
-
-        print globalvars.monster_proximity_block
+        if player.entclass.perks[2][1] == 1:
+            if is_blocked(target.x - 1, target.y):
+                globalvars.monster_proximity_block[3] = 1
+            if is_blocked(target.x + 1, target.y):
+                globalvars.monster_proximity_block[1] = 1
+            if is_blocked(target.x, target.y - 1):
+                globalvars.monster_proximity_block[0] = 1
+            if is_blocked(target.x, target.y + 1):
+                globalvars.monster_proximity_block[2] = 1
 
         player.entclass.attack(target)
-
     else:
         player.move(dx, dy)
 
@@ -248,48 +250,196 @@ def place_objects():
                 # create an orc
                 monsterentity = nonplayercharacter.monster(hp=10, agility=4, strength=6, intelligence=3, level=1,
                                                            on_death=monster_death)
-                ai = monsterAi()
+                basicAi = monsterBasicAi()
                 monster = Object(x, y, 'O', 'orc', libtcod.desaturated_green,
-                                 blocks=True, entclass=monsterentity, ai=ai)
+                                 blocks=True, entclass=monsterentity, ai=basicAi)
             else:
                 # create a troll
                 monsterentity = nonplayercharacter.monster(hp=15, agility=6, strength=5, intelligence=4, level=2,
                                                            on_death=monster_death)
-                ai = monsterAi()
+                basicAi = monsterBasicAi()
                 monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
-                                 blocks=True, entclass=monsterentity, ai=ai)
+                                 blocks=True, entclass=monsterentity, ai=basicAi)
             objects.append(monster)
 
 
+def cast_spells(spell_id):
+    if spell_id == 0:  # charge
+        message('Left-click an enemy to charge it.', libtcod.light_cyan)
+        monster = target_monster()
+        if monster is not None:
+            while player.distance_to_object(monster) > 1:
+                player.move_towards(monster)
+            player.entclass.attack(monster)
+        else:
+            message('You did not charge.', libtcod.white)
+
+        render_all()
+
+    if spell_id == 1:  # hurl
+        message('Left-click an enemy to hurl it around.', libtcod.light_cyan)
+        monster = target_monster(max_range=1)
+        if monster is not None:
+            monster.x += random.randint(-3, 3)
+            monster.y += random.randint(-3, 3)
+            monster.entclass.take_damage(player.entclass.vitality * 10)
+            message('You hurl your enemy around, dealing massive ' + str(player.entclass.vitality * 10) + ' damage!')
+        else:
+            message('You did not hurl anything.', libtcod.white)
+    if spell_id == 2:  # word of power
+        for obj in objects:  # damage every monster in range
+            if obj is not player and obj.distance_to_object(player) <= 10:
+                message('The ' + obj.name + ' gets struck by the wave of energy and suffers ' + str(
+                    player.entclass.intelligence + player.entclass.vitality + player.entclass.strength) + ' damage.',
+                        libtcod.orange)
+                obj.entclass.take_damage(
+                    player.entclass.vitality + player.entclass.intelligence + player.entclass.strength)
+        render_all()
+    if spell_id == 3:  # arcane missiles
+        monster = closest_monster(10)
+        if monster is None:  # no enemy found within maximum range
+            message('No enemy is close enough to aim at.', libtcod.red)
+            return 'cancelled'
+
+        message('You hit ' + monster.name + ' three times with your arcane missile. ' + monster.name + ' takes ' + str(
+            player.entclass.intelligence) + ' damage.', libtcod.light_blue)
+        monster.entclass.take_damage(player.entclass.intelligence)
+        render_all()
+
+    if spell_id == 4:  # fireball
+        message('Left-click a target tile for the fireball, or right-click to cancel.', libtcod.light_cyan)
+        (x, y) = target_tile()
+        if x is None: return 'cancelled'
+        message('The fireball explodes, burning everything in a fiery inferno!', libtcod.orange)
+
+        for obj in objects:  # damage every fighter in range, excluding the player
+            (object_x, object_y) = relative_coordinates(obj.x, obj.y)
+            if obj is not player and obj.entclass is not None and -5 <= (object_x - x) <= 5 and -5 <= (
+                        object_y - y) <= 5:
+                message('The ' + obj.name + ' gets burned for ' + str(player.entclass.intelligence) + ' hit points.',
+                        libtcod.orange)
+                obj.entclass.take_damage(player.entclass.intelligence)
+            elif obj is player:
+                player.entclass.hp += player.entclass.intelligence
+        render_all()
+
+    if spell_id == 5:  # Frozen Tomb
+        message('Left-click an enemy to freeze it to death.', libtcod.dark_blue)
+        monster = target_monster()
+        if monster is not None:
+            monster.entclass.frozentomb = 1
+        else:
+            message('You did not use your power.', libtcod.white)
+        render_all()
+
+    if spell_id == 6:  # Enormous Blast
+        message('An earthquake shatters the ground, heavily damaging everyone around you.')
+        for obj in objects:
+            if obj is not player and obj.entclass is not None:
+                if obj.distance_to_object(player) == 3:
+                    obj.entclass.take_damage(1 * (player.entclass.agility + player.entclass.strength))
+                    message('The earthquake barely reaches ' + str(obj.name) +
+                            ' and damages it for ' + str(1 * (player.entclass.agility + player.entclass.strength)))
+                if obj.distance_to_object(player) == 2:
+                    obj.entclass.take_damage(2 * (player.entclass.agility + player.entclass.strength))
+                    message('The earthquake reaches ' + str(obj.name) +
+                            ' and damages it for ' + str(2 * (player.entclass.agility + player.entclass.strength)))
+                if obj.distance_to_object(player) == 1:
+                    obj.entclass.take_damage(4 * (player.entclass.agility + player.entclass.strength))
+                    message('The earthquake devastates ' + str(obj.name) +
+                            ' and damages it for ' + str(4 * (player.entclass.agility + player.entclass.strength)))
+        render_all()
+
+    if spell_id == 7:  # Weapon Throw
+        message('Left-click an enemy to throw your weapon at it.', libtcod.light_cyan)
+        monster = target_monster()
+        if monster is not None:
+            player.entclass.attack(monster)
+            message('You concentrate and find your weapon in your hand again. And you are not even a wizard!')
+        else:
+            message('You could not bear losing your beloved weapon.', libtcod.white)
+
+        render_all()
+
+
+def target_monster(max_range=None):
+    while True:
+        (x, y) = target_tile(max_range)
+        if x is None:
+            return None
+
+        for obj in objects:
+            (object_x, object_y) = relative_coordinates(obj.x, obj.y)
+            if object_x == x and object_y == y and obj != player:
+                return obj
+
+
 def target_tile(max_range=None):
-    # return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
     global key, mouse
     while True:
-        # render the screen. this erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
         render_all()
 
         (x, y) = (mouse.cx, mouse.cy)
-
         if mouse.lbutton_pressed:
+            print (x, y)
             return (x, y)
 
         if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
             return (None, None)  # cancel if the player right-clicked or pressed Escape
 
 
-class monsterAi():
+def game_over(player):
+    message('You died!')
+    player.char = '%'
+    player.color = libtcod.dark_red
+
+
+def monster_death(monster):
+    message(str.capitalize(monster.name) + ' is dead!')
+    # Vampirism Perk
+    if player.entclass.perks[1][5] == 1:
+        player.entclass.hp += int(monster.entclass.hp / 2)
+    # Soul Reaver Stack Gain
+    if player.entclass.perks[2][5] == 1:
+        player.entclass.souls += 1
+    monster.char = '%'
+    monster.color = libtcod.dark_red
+    monster.blocks = False
+    monster.entclass = None
+    monster.ai = None
+    monster.name = 'remains of ' + monster.name
+
+
+def closest_monster(max_range):
+    closest_enemy = None
+    closest_dist = max_range + 1
+
+    for object in objects:
+        if object.entclass and not object == player:
+            # calculate distance between this object and the player
+            dist = player.distance_to_object(object)
+            if dist < closest_dist:
+                closest_enemy = object
+                closest_dist = dist
+    return closest_enemy
+
+
+class monsterBasicAi():
     def take_turn(self):
         monster = self.owner
-        if monster.entclass.stunned == 0:
+        if monster.entclass.frozentomb == 1:
+            monster.entclass.take_damage(player.entclass.intelligence)
+            message(monster.name + ' freezes slowly until death.')
+        elif monster.entclass.stunned == 0:
             if monster.distance_to_object(player) >= 2:
                 monster.move_towards(player)
             elif player.entclass.hp > 0:
                 monster.entclass.attack(player)
         elif monster.entclass.stunned == 1:
-            print '*UNSTUNNED*'
             monster.entclass.stunned = 0
+            message(monster.name + ' breaks free of its confusion.')
 
 
 def update_visual_map():
@@ -316,42 +466,46 @@ def render_all():
 
     global color_light_wall
     global color_light_ground
-
+    global fov_recompute
+    if fov_recompute:
+        #recompute FOV if needed (the player moved or something)
+        fov_recompute = False
+        libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
     # go through all tiles, and set their color
-    for y in range(VISUAL_HEIGHT):
-        for x in range(VISUAL_WIDTH):
-            id = visual[x][y]
+        for y in range(VISUAL_HEIGHT):
+            for x in range(VISUAL_WIDTH):
+                #visible = libtcod.map_is_in_fov(fov_map, x, y)
+                #wall = map[x][y].block_sight
+                id = visual[x][y]
+                tile_color = tile_list[id].colors[0]
+                if len(tile_list[id].colors) > 1:
+                    value = math.degrees((x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
+                    if int(value) % 2 == 1:
+                        tile_color = tile_list[id].colors[1]
 
-            # variation 1 - not good
-            tile_color = tile_list[id].colors[0]
-            if len(tile_list[id].colors) > 1:
-                value = math.degrees((x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
-                if int(value) % 2 == 1:
-                    tile_color = tile_list[id].colors[1]
+                # animate if two colors
+                if tile_list[id].animation_color != "":
+                    r = random.randrange(2)
+                    if r >= 1:
+                        tile_color = tile_list[id].animation_color
 
-            # animate if two colors
-            if tile_list[id].animation_color != "":
-                r = random.randrange(2)
-                if r >= 1:
-                    tile_color = tile_list[id].animation_color
+                tile_variation = 0
+                if 1 < len(tile_list[id].chars) <= 2:
+                    value = math.lgamma((x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                    if int(value) % 2 == 1:
+                        tile_variation = 1
 
-            tile_variation = 0
-            if 1 < len(tile_list[id].chars) <= 2:
-                value = math.lgamma((x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
-                if int(value) % 2 == 1:
-                    tile_variation = 1
+                elif len(tile_list[id].chars) > 2:
+                    value = math.lgamma((x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                    if int(value) % 3 == 1:
+                        tile_variation = 1
+                    elif int(value) % 3 == 2:
+                        tile_variation = 2
 
-            elif len(tile_list[id].chars) > 2:
-                value = math.lgamma((x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
-                if int(value) % 3 == 1:
-                    tile_variation = 1
-                elif int(value) % 3 == 2:
-                    tile_variation = 2
-
-            libtcod.console_set_default_foreground(con, getattr(color, tile_color))
-            libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET,
-                                     int(tile_list[id].chars[tile_variation]),
-                                     libtcod.BKGND_NONE)
+                libtcod.console_set_default_foreground(con, getattr(color, tile_color))
+                libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET,
+                                         int(tile_list[id].chars[tile_variation]),
+                                         libtcod.BKGND_NONE)
 
     # draw all objects in the list
     place_objects()
@@ -366,10 +520,11 @@ def render_all():
     # prepare to render the GUI panel
     libtcod.console_set_default_background(top_panel, libtcod.black)
     libtcod.console_clear(top_panel)
-    libtcod.console_set_default_background(bottom_panel, libtcod.black)
-    libtcod.console_clear(bottom_panel)
     libtcod.console_set_default_background(side_panel, libtcod.black)
     libtcod.console_clear(side_panel)
+    libtcod.console_set_default_background(bottom_panel, libtcod.black)
+    libtcod.console_clear(bottom_panel)
+
 
     # print the game messages, one line at a time
     y = 1
@@ -380,6 +535,8 @@ def render_all():
 
     # show the player's stats
     gui.render_hp_bar(bottom_panel, 1, 1, BAR_WIDTH, 'HP', player.entclass.hp, player.entclass.max_hp)
+    # shows exp
+    # gui.render_exp_bar(bottom_panel, 1, 3, BAR_WIDTH, 'XP', playr.entclass.xp, player.entclass.level * 10
     # shows the time
     calc_time()
     gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, time, color.blue)
@@ -464,48 +621,12 @@ def menu(header, options, width):
     return None
 
 
-def game_over(player):
-    message('You died!')
-    player.char = '%'
-    player.color = libtcod.dark_red
-
-
-def monster_death(monster):
-    message(str(monster.name) + ' is dead!')
-    # Vampirism Perk
-    if player.entclass.perks[1][5] == 1:
-        player.entclass.hp += int(monster.entclass.hp / 2)
-    # Soul Reaver Stack Gain
-    if player.entclass.perks[2][5] == 1:
-        player.entclass.souls += 1
-    monster.char = '%'
-    monster.color = libtcod.dark_red
-    monster.blocks = False
-    monster.entclass = None
-    monster.ai = None
-    monster.name = 'remains of ' + monster.name
-
-
-def closest_monster(max_range):
-    # find closest enemy, up to a maximum range, and in the player's FOV
-    closest_enemy = None
-    closest_dist = max_range + 1  # start with (slightly more than) maximum range
-
-    for object in objects:
-        if object.entclass and not object == player:  # and libtcod.map_is_in_fov(fov_map, object.x, object.y)
-            # calculate distance between this object and the player
-            dist = player.distance_to_object(object)
-            if dist < closest_dist:
-                closest_enemy = object
-                closest_dist = dist
-    return closest_enemy
-
-
 def handle_keys():
     global numClicks
     # key = libtcod.console_check_for_keypress()  #real-time
     key = libtcod.console_wait_for_keypress(True)  # turn-based
     global player_action
+    global fov_recompute
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         # Alt+Enter: toggle fullscreen
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
@@ -518,25 +639,25 @@ def handle_keys():
             attackmove(0, -1)
             globalvars.player_y = player.y
             player.entclass.update_stats(time=numClicks)
-            numClicks += 1
+            fov_recompute = True
             player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_DOWN):
             attackmove(0, 1)
             globalvars.player_y = player.y
             player.entclass.update_stats(time=numClicks)
-            numClicks += 1
+            fov_recompute = True
             player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_LEFT):
             attackmove(-1, 0)
             globalvars.player_x = player.x
             player.entclass.update_stats(time=numClicks)
-            numClicks += 1
+            fov_recompute = True
             player_action = 'not passed'
         elif libtcod.console_is_key_pressed(libtcod.KEY_RIGHT):
             attackmove(1, 0)
             globalvars.player_x = player.x
             player.entclass.update_stats(time=numClicks)
-            numClicks += 1
+            fov_recompute = True
             player_action = 'not passed'
         else:
             # return 'player_pass'
@@ -544,10 +665,9 @@ def handle_keys():
             player_action = 'passed'
             if key_char == 'p' and not libtcod.console_is_key_pressed(key):
                 # show in-game menu
-                chosen_option = gui.perk_menu('Press the key next to the perk you want to use.\n', 1, 0)
+                chosen_option = gui.perk_menu('Press the key next to the perk you want to learn.\n', 1, 0)
                 if chosen_option is 0:
                     chosen_perk = gui.perk_menu('FORTITUDE.\n', 0, 1)
-
                 elif chosen_option is 1:
                     chosen_perk = gui.perk_menu('CUNNING.\n', 0, 1)
 
@@ -557,6 +677,9 @@ def handle_keys():
             if key_char == 'i' and not libtcod.console_is_key_pressed(key):
                 # show black screen in game
                 gui.text_menu()
+
+            if key_char == 'o' and not libtcod.console_is_key_pressed(key):
+                cast_spells(6)
 
             if key_char == 'x' and not libtcod.console_is_key_pressed(key):
                 gui.save_game(player, objects)
@@ -643,9 +766,9 @@ libtcod.sys_set_fps(LIMIT_FPS)
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 # create the entity and the object of the player
-playerentity = playercharacter.entity(hp=100, strength=5, agility=5, intelligence=5, vitality=5,
-                                      first_name='Lennard', name='Cooper', race='human', gender='f',
-                                      on_death=game_over)
+playerentity = playercharacter.PlayerEntity(hp=100, strength=5, agility=5, intelligence=5, vitality=5,
+                                            first_name='Lennard', name='Cooper', race='human', gender='f',
+                                            on_death=game_over)
 player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.white, blocks=True,
                 entclass=playerentity)
 
@@ -673,6 +796,13 @@ if game_status == 1:
 
     make_visual_map()
 
+    fov_map = libtcod.map_new(VISUAL_HEIGHT, VISUAL_WIDTH)
+
+    for y in range(VISUAL_HEIGHT):
+        for x in range(VISUAL_WIDTH):
+            libtcod.map_set_properties(fov_map, x, y, not tile_list[map[x * MAP_SIZE + y]].sight_blocked,
+                                       not tile_list[map[x * MAP_SIZE + y]].move_blocked)
+
 while not libtcod.console_is_window_closed():
 
     if game_status == 0:
@@ -682,6 +812,10 @@ while not libtcod.console_is_window_closed():
     libtcod.console_flush()
 
     if game_status == 1:
+        # Add the queued game messages sent from playercharacter.py
+        while len(globalvars.queued_messages) > 0:
+            message(globalvars.queued_messages[0])
+            globalvars.queued_messages.pop(0)
         # render the screen
         render_all()
         # erase all objects at their old locations, before they move
@@ -699,7 +833,6 @@ while not libtcod.console_is_window_closed():
             for object in objects:
                 if object.ai:
                     object.ai.take_turn()
-                    print 'pass'
     # Intro
     if game_status == 3:
         img = libtcod.image_load("data/images/intro_2.png")
