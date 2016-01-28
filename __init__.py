@@ -7,13 +7,13 @@ from ctypes import c_int
 from multiprocessing import Value
 
 import libtcodpy as libtcod
-from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars
+from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars, entitymanager
 
 # actual size of the window
 SCREEN_WIDTH = 90
 SCREEN_HEIGHT = 65
 
-FONT_SIZE = 8  # 8 = small, 12 = normal, 16 = big
+FONT_SIZE = 12  # 8 = small, 12 = normal, 16 = big
 
 # size of the map
 MAP_SIZE = 512
@@ -474,7 +474,7 @@ def render_all():
     # go through all tiles, and set their color
         for y in range(VISUAL_HEIGHT):
             for x in range(VISUAL_WIDTH):
-                #visible = libtcod.map_is_in_fov(fov_map, x, y)
+                visible = libtcod.map_is_in_fov(fov_map, x, y)
                 #wall = map[x][y].block_sight
                 id = visual[x][y]
                 tile_color = tile_list[id].colors[0]
@@ -771,6 +771,8 @@ playerentity = playercharacter.PlayerEntity(hp=100, strength=5, agility=5, intel
                                             on_death=game_over)
 player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.white, blocks=True,
                 entclass=playerentity)
+
+entitymanager.load_entities("data/entities/monsters")
 
 game_status = main_menu()
 global map

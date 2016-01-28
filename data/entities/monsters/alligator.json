@@ -1,34 +1,37 @@
 {
-	"Name" : "Alligator",
-	"Char" : 65,
-	"Visual Representation" : A,
-	"Color" : ,
-	"Biomes" : 12,
-	"Behavior" : ,
-	"Loot" :[
-		{"ID" : ,
-		"Name" : ,
-		"Droprate" : ,
-		
-		},{
-		}
-	]
-	"Abilities" :[
-		{
-		},{
-		}
-	]
-	"Attributes" : [
-		{
-		"HP" : 75,
-		"Level" : 4,
-		"Strength" : 5,
-		"Agility" : 3,
-		"Intelligence" : 2,
-		"on_death" : ,
-		"Attack" : ,
-		"Defence" : ,
-		},{
-		}
-	]
-	}
+  "Name": "Alligator",
+  "Char": 65,
+  "Visual Representation": A,
+  "Color":,
+  "Biomes": 12,
+  "Behavior":,
+  "Loot": [
+    {
+      "ID":,
+      "Name":,
+      "Droprate":,
+    },
+    {
+    }
+  ]
+  "Abilities": [
+    {
+    },
+    {
+    }
+  ]
+  "Attributes": [
+    {
+      "HP": 75,
+      "Level": 4,
+      "Strength": 5,
+      "Agility": 3,
+      "Intelligence": 2,
+      "on_death":,
+      "Attack":,
+      "Defence":,
+    },
+    {
+    }
+  ]
+}

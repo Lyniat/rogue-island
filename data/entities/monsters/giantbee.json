@@ -1,34 +1,37 @@
 {
-	"Name" : "GiantBee",
-	"Char" : 71,
-	"Visual Representation" : G,
-	"Color" : ,
-	"Biomes" : 16,
-	"Behavior" : ,
-	"Loot" :[
-		{"ID" : ,
-		"Name" : ,
-		"Droprate" : ,
-		
-		},{
-		}
-	]
-	"Abilities" :[
-		{
-		},{
-		}
-	]
-	"Attributes" : [
-		{
-		"HP" : 50,
-		"Level" : 5,
-		"Strength" : 6,
-		"Agility" : 6,
-		"Intelligence" : 3,
-		"on_death" : ,
-		"Attack" : ,
-		"Defence" : ,
-		},{
-		}
-	]
-	}
+  "Name": "GiantBee",
+  "Char": 71,
+  "Visual Representation": "G",
+  "Color": null,
+  "Biomes": 16,
+  "Behavior": null,
+  "Loot": [
+    {
+      "ID": null,
+      "Name": null,
+      "Droprate": null
+    },
+    {
+    }
+  ],
+  "Abilities": [
+    {
+    },
+    {
+    }
+  ],
+  "Attributes": [
+    {
+      "HP": 50,
+      "Level": 5,
+      "Strength": 6,
+      "Agility": 6,
+      "Intelligence": 3,
+      "on_death": null,
+      "Attack": null,
+      "Defence": null
+    },
+    {
+    }
+  ]
+}

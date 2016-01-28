@@ -18,6 +18,16 @@ shared_tilemap = None
 processor_num = 0
 
 
+#################
+#
+# structure of tile vars
+# fffeeedddccccbbaaa
+#  3  3  3  4  2  3  = 18
+# f = objectId, e = region details, d = biomeID, c = height, b = tileVariation, a = tileId
+#
+#################
+
+
 def noise(nx, ny):
     # Rescale from -1.0:+1.0 to 0.0:1.0
     return gen.noise2d(nx, ny) / 2.0 + 0.5
@@ -235,12 +245,6 @@ def generate_noise(process_id, processes, tilemap, percent, steps):
                 tilemap[x * size + y] = 4
             if value >= 0.6:
                 tilemap[x * size + y] = 5
-
-            color = int(value * 255)
-
-            red = int((gen.noise3d(x, y, 0) + 1) * 127)
-            green = int((gen.noise3d(x, y, 0) + 1) * 127)
-            blue = int((gen.noise3d(x, y, 0) + 1) * 127)
 
             # print value
 
