@@ -5,11 +5,11 @@
 	"Visual Representation" : S,
 	"Color" : ,
 	"Biomes" : 10,
-	"Behavior" : ,
+	"Behavior" : null,
 	"Loot" :[
 		{"ID" : ,
 		"Name" : ,
-		"Droprate" : ,
+		"Droprate" : null
 		
 		},{
 		}
@@ -18,7 +18,7 @@
 		{
 		},{
 		}
-	]
+	],
 	"Attributes" : [
 		{
 		"HP" : 100,

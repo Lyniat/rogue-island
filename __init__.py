@@ -7,7 +7,8 @@ from ctypes import c_int
 from multiprocessing import Value
 
 import libtcodpy as libtcod
-from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars, entitymanager
+from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars, \
+    entitymanager, object, world
 
 # actual size of the window
 SCREEN_WIDTH = 90
@@ -71,77 +72,6 @@ class Info_text:
     def set(self, t):
         self.text = t
 
-
-def is_blocked(x, y):
-    if tile_list[map[x * MAP_SIZE + y]].move_blocked == 0:
-        return True
-    for object in objects:
-        if object.blocks and object.x == x and object.y == y:
-            return True
-    return False
-
-
-class Object:
-    # A generic objecjt representing both the player and monsters, where entclass stands for entity class
-    # and defines exactly whether it's a NPC or PC.
-    def __init__(self, x, y, char, name, color, blocks=False, entclass=None, ai=None):
-        self.x = x
-        self.y = y
-        self.char = char
-        self.color = color
-        self.blocks = blocks
-        self.name = name
-
-        self.entclass = entclass
-        if self.entclass:
-            self.entclass.owner = self
-
-        self.ai = ai
-        if self.ai:
-            self.ai.owner = self
-
-    def move(self, dx, dy):
-        # move by the given amount, if the destination is not blocked
-        if not is_blocked(self.x + dx, self.y + dy):
-            self.x += dx
-            self.y += dy
-
-    def draw(self):
-        # set the color and then draw the character that represents this object at its position
-        (x, y) = relative_coordinates(self.x, self.y)
-        libtcod.console_set_default_foreground(con, self.color)
-        libtcod.console_put_char(con, x, y,
-                                 self.char, libtcod.BKGND_NONE)
-
-    def clear(self):
-        # erase the character that represents this object
-        libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
-
-    def move_towards(self, object):
-        dx = object.x - self.x
-        dy = object.y - self.y
-        distance = math.sqrt(dx ** 2 + dy ** 2)
-        dx = int(round(dx / distance))
-        dy = int(round(dy / distance))
-        if math.fabs(dx) > math.fabs(dy):
-            self.move(dx, 0)
-        elif math.fabs(dx) < math.fabs(dy):
-            self.move(0, dy)
-        else:
-            if random.randint(0, 1) == 1:
-                self.move(dx, 0)
-            else:
-                self.move(0, dy)
-
-    def distance_to_object(self, other):
-        dx = other.x - self.x
-        dy = other.y - self.y
-        return math.sqrt(dx ** 2 + dy ** 2)
-
-    def distance_to_tile(self, x, y):
-        return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
-
-
 """ WIP: A* algorithm - at the moment helluva slow thing
     def move_astar(self, target):
         # This creates a 'minimap' of the visible screen
@@ -186,7 +116,7 @@ def relative_coordinates(x, y):
     return (x, y)
 
 
-class Player(Object):
+class Player(object.Object):
     def draw(self):
         libtcod.console_set_default_foreground(con, self.color)
         libtcod.console_put_char(con, VISUAL_WIDTH / 2 + VISUAL_WIDTH_OFFSET, VISUAL_HEIGHT / 2 + VISUAL_HEIGHT_OFFSET,
@@ -227,42 +157,6 @@ def attackmove(dx, dy):
         player.move(dx, dy)
 
 
-def place_objects():
-    while len(objects) <= MAX_MONSTERS:
-        r = random.randrange(4)
-        if r < 1:
-            x = player.x + VISUAL_WIDTH + 5
-            y = player.y + VISUAL_HEIGHT + random.randrange(-10, 10)
-
-        elif 1 <= r < 2:
-            x = player.x - VISUAL_WIDTH - 5
-            y = player.y + VISUAL_HEIGHT + random.randrange(-10, 10)
-        elif 2 <= r < 3:
-            x = player.x + VISUAL_WIDTH + random.randrange(-10, 10)
-            y = player.y + VISUAL_HEIGHT + 5
-
-        elif 3 <= r < 4:
-            x = player.x + VISUAL_WIDTH + random.randrange(-10, 10)
-            y = player.y - VISUAL_HEIGHT - 5
-
-        if not is_blocked(x, y):
-            if random.randrange(100) < 60:  # 60% chance of getting an orc
-                # create an orc
-                monsterentity = nonplayercharacter.monster(hp=10, agility=4, strength=6, intelligence=3, level=1,
-                                                           on_death=monster_death)
-                basicAi = monsterBasicAi()
-                monster = Object(x, y, 'O', 'orc', libtcod.desaturated_green,
-                                 blocks=True, entclass=monsterentity, ai=basicAi)
-            else:
-                # create a troll
-                monsterentity = nonplayercharacter.monster(hp=15, agility=6, strength=5, intelligence=4, level=2,
-                                                           on_death=monster_death)
-                basicAi = monsterBasicAi()
-                monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
-                                 blocks=True, entclass=monsterentity, ai=basicAi)
-            objects.append(monster)
-
-
 def cast_spells(spell_id):
     if spell_id == 0:  # charge
         message('Left-click an enemy to charge it.', libtcod.light_cyan)
@@ -290,10 +184,10 @@ def cast_spells(spell_id):
         for obj in objects:  # damage every monster in range
             if obj is not player and obj.distance_to_object(player) <= 10:
                 message('The ' + obj.name + ' gets struck by the wave of energy and suffers ' + str(
-                    player.entclass.intelligence + player.entclass.vitality + player.entclass.strength) + ' damage.',
+                        player.entclass.intelligence + player.entclass.vitality + player.entclass.strength) + ' damage.',
                         libtcod.orange)
                 obj.entclass.take_damage(
-                    player.entclass.vitality + player.entclass.intelligence + player.entclass.strength)
+                        player.entclass.vitality + player.entclass.intelligence + player.entclass.strength)
         render_all()
     if spell_id == 3:  # arcane missiles
         monster = closest_monster(10)
@@ -302,7 +196,7 @@ def cast_spells(spell_id):
             return 'cancelled'
 
         message('You hit ' + monster.name + ' three times with your arcane missile. ' + monster.name + ' takes ' + str(
-            player.entclass.intelligence) + ' damage.', libtcod.light_blue)
+                player.entclass.intelligence) + ' damage.', libtcod.light_blue)
         monster.entclass.take_damage(player.entclass.intelligence)
         render_all()
 
@@ -426,22 +320,6 @@ def closest_monster(max_range):
     return closest_enemy
 
 
-class monsterBasicAi():
-    def take_turn(self):
-        monster = self.owner
-        if monster.entclass.frozentomb == 1:
-            monster.entclass.take_damage(player.entclass.intelligence)
-            message(monster.name + ' freezes slowly until death.')
-        elif monster.entclass.stunned == 0:
-            if monster.distance_to_object(player) >= 2:
-                monster.move_towards(player)
-            elif player.entclass.hp > 0:
-                monster.entclass.attack(player)
-        elif monster.entclass.stunned == 1:
-            monster.entclass.stunned = 0
-            message(monster.name + ' breaks free of its confusion.')
-
-
 def update_visual_map():
     size = MAP_SIZE
     for x in range(VISUAL_WIDTH):
@@ -468,18 +346,19 @@ def render_all():
     global color_light_ground
     global fov_recompute
     if fov_recompute:
-        #recompute FOV if needed (the player moved or something)
+        # recompute FOV if needed (the player moved or something)
         fov_recompute = False
         libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
-    # go through all tiles, and set their color
+        # go through all tiles, and set their color
         for y in range(VISUAL_HEIGHT):
             for x in range(VISUAL_WIDTH):
                 visible = libtcod.map_is_in_fov(fov_map, x, y)
-                #wall = map[x][y].block_sight
+                # wall = map[x][y].block_sight
                 id = visual[x][y]
                 tile_color = tile_list[id].colors[0]
                 if len(tile_list[id].colors) > 1:
-                    value = math.degrees((x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
+                    value = math.degrees(
+                            (x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
                     if int(value) % 2 == 1:
                         tile_color = tile_list[id].colors[1]
 
@@ -491,12 +370,14 @@ def render_all():
 
                 tile_variation = 0
                 if 1 < len(tile_list[id].chars) <= 2:
-                    value = math.lgamma((x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                    value = math.lgamma(
+                            (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
                     if int(value) % 2 == 1:
                         tile_variation = 1
 
                 elif len(tile_list[id].chars) > 2:
-                    value = math.lgamma((x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                    value = math.lgamma(
+                            (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
                     if int(value) % 3 == 1:
                         tile_variation = 1
                     elif int(value) % 3 == 2:
@@ -507,9 +388,7 @@ def render_all():
                                          int(tile_list[id].chars[tile_variation]),
                                          libtcod.BKGND_NONE)
 
-    # draw all objects in the list
-    place_objects()
-    for object in objects:
+    for object in world.objects:
         if object != player:
             object.draw()
         player.draw()
@@ -524,7 +403,6 @@ def render_all():
     libtcod.console_clear(side_panel)
     libtcod.console_set_default_background(bottom_panel, libtcod.black)
     libtcod.console_clear(bottom_panel)
-
 
     # print the game messages, one line at a time
     y = 1
@@ -619,6 +497,10 @@ def menu(header, options, width):
     index = key.c - ord('a')
     if index >= 0 and index < len(options): return index
     return None
+
+
+def get_player():
+    return player
 
 
 def handle_keys():
@@ -765,20 +647,21 @@ libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'ASCII Adventure', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
+global tile_list
+global game_msgs
+tile_list = []
+
+load_tiles()
+
+global world
+world = world.World(con,tile_list)
+
 # create the entity and the object of the player
 playerentity = playercharacter.PlayerEntity(hp=100, strength=5, agility=5, intelligence=5, vitality=5,
                                             first_name='Lennard', name='Cooper', race='human', gender='f',
                                             on_death=game_over)
-player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.white, blocks=True,
+player = Player(world, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.white, blocks=True,
                 entclass=playerentity)
-
-entitymanager.load_entities("data/entities/monsters")
-
-game_status = main_menu()
-global map
-global tile_list
-global game_msgs
-tile_list = []
 
 if game_status == 0:
     info_text = Info_text("                                                                              ")
@@ -787,11 +670,12 @@ if game_status == 0:
 if game_status == 1:
     game_msgs = []
     message('Welcome to Rogue Island!', color.yellow)
-
-    load_tiles()
     map = loader.load_map()
 
-    objects.append(player)
+    world.set_map(map)
+    world.set_player(player)
+
+    world.objects.append(player)
 
     globalvars.player_x = player.x
     globalvars.player_y = player.y
@@ -821,7 +705,7 @@ while not libtcod.console_is_window_closed():
         # render the screen
         render_all()
         # erase all objects at their old locations, before they move
-        for object in objects:
+        for object in world.objects:
             object.clear()
 
         ###########################
@@ -831,10 +715,13 @@ while not libtcod.console_is_window_closed():
         # handle keys and exit game if needed
         exit = handle_keys()
 
+        world.manage_monsters()
+
         if game_status == 1 and player_action == 'not passed':
-            for object in objects:
-                if object.ai:
-                    object.ai.take_turn()
+            for object in world.objects:
+                if object is not None:
+                    if object.ai:
+                        object.ai.take_turn()
     # Intro
     if game_status == 3:
         img = libtcod.image_load("data/images/intro_2.png")

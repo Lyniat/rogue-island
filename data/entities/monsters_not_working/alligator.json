@@ -1,7 +1,7 @@
 {
   "Name": "Alligator",
   "Char": 65,
-  "Visual Representation": A,
+  "Visual Representation": "A",
   "Color":,
   "Biomes": 12,
   "Behavior":,
