@@ -2,8 +2,8 @@
   "Name": "Slug",
   "Char": 83,
   "Visual Representation": "S",
-  "Color": "debug",
-  "Biomes": 10,
+  "Color": "silver",
+  "Biomes": [10],
   "Behavior": null,
   "Loot": [
     {

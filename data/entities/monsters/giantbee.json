@@ -2,8 +2,8 @@
   "Name": "GiantBee",
   "Char": 71,
   "Visual Representation": "G",
-  "Color": "debug",
-  "Biomes": 16,
+  "Color": "black",
+  "Biomes": [16],
   "Behavior": null,
   "Loot": [
     {

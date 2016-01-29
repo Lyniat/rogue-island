@@ -3,7 +3,7 @@
   "Char": 73,
   "Visual Representation": "I",
   "Color": "debug",
-  "Biomes": 2,
+  "Biomes": [2],
   "Behavior": null,
   "Loot": [
     {
