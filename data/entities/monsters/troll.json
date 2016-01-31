@@ -18,7 +18,7 @@
 		},{
 		}
 	],
-	"Attributes" : [
+	"Attributes" :
 		{
 		"HP" : 70,
 		"Level" : 5,
@@ -28,7 +28,5 @@
 		"on_death" : null,
 		"Attack" : null,
 		"Defence" : null
-		},{
 		}
-	]
 	}

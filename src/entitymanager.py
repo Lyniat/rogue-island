@@ -18,12 +18,13 @@ class Entitymanager():
                 content = content_file.read()
 
             values = json.loads(content)
-            biome = values.get("Biomes")
+            biomes = values.get("Biomes")
 
-            if self.monster_dict.get(biome) is None:
-                self.monster_dict[biome] = []
+            for i in range(len(biomes)):
+                if self.monster_dict.get(biomes[i]) is None:
+                    self.monster_dict[biomes[i]] = []
 
-            self.monster_dict[biome].append(values)
+            self.monster_dict[biomes[i]].append(values)
 
     def get_monster_at_tile(self, tile_id,x,y):
         monster_list = self.monster_dict.get(tile_id)
@@ -33,6 +34,7 @@ class Entitymanager():
         r = random.randint(0, len(monster_list) - 1)
         monster_values = monster_list[r]
         monster_attributes = monster_values.get("Attributes")
+        print monster_attributes
         # return monster
 
         monsterentity = nonplayercharacter.monster(hp=monster_attributes.get("HP"),
