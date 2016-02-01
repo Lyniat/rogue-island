@@ -42,7 +42,7 @@ LIMIT_FPS = 30  # 30 frames-per-second
 
 FOV_ALGO = 0  # default FOV algorithm
 FOV_LIGHT_WALLS = True
-TORCH_RADIUS = 10
+torch_radius = 10
 MAX_MONSTERS = 20
 
 # GUI panel at the bottom/top of the screen
@@ -348,7 +348,7 @@ def render_all():
     if fov_recompute:
         # recompute FOV if needed (the player moved or something)
         fov_recompute = False
-        libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
+        libtcod.map_compute_fov(fov_map, player.x, player.y, torch_radius, FOV_LIGHT_WALLS, FOV_ALGO)
         # go through all tiles, and set their color
         for y in range(VISUAL_HEIGHT):
             for x in range(VISUAL_WIDTH):
