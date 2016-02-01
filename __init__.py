@@ -7,14 +7,14 @@ from ctypes import c_int
 from multiprocessing import Value
 
 import libtcodpy as libtcod
-from src import color, island_generator, loader, nonplayercharacter, playercharacter, tiles, gui, globalvars, \
-    entitymanager, object, world
+from src import color, island_generator, loader, playercharacter, tiles, gui, globalvars, \
+    object, world
 
 # actual size of the window
 SCREEN_WIDTH = 90
 SCREEN_HEIGHT = 65
 
-FONT_SIZE = 12  # 8 = small, 12 = normal, 16 = big
+FONT_SIZE = 8  # 8 = small, 12 = normal, 16 = big
 
 # size of the map
 MAP_SIZE = 512
@@ -71,6 +71,7 @@ class Info_text:
 
     def set(self, t):
         self.text = t
+
 
 """ WIP: A* algorithm - at the moment helluva slow thing
     def move_astar(self, target):
@@ -134,7 +135,7 @@ def attackmove(dx, dy):
 
     # try to find an attackable object there
     target = None
-    for object in objects:
+    for object in world.objects:
         if object.entclass and object.x == x and object.y == y:
             target = object
             break
@@ -181,13 +182,13 @@ def cast_spells(spell_id):
         else:
             message('You did not hurl anything.', libtcod.white)
     if spell_id == 2:  # word of power
-        for obj in objects:  # damage every monster in range
+        for obj in world.objects:  # damage every monster in range
             if obj is not player and obj.distance_to_object(player) <= 10:
                 message('The ' + obj.name + ' gets struck by the wave of energy and suffers ' + str(
-                        player.entclass.intelligence + player.entclass.vitality + player.entclass.strength) + ' damage.',
+                    player.entclass.intelligence + player.entclass.vitality + player.entclass.strength) + ' damage.',
                         libtcod.orange)
                 obj.entclass.take_damage(
-                        player.entclass.vitality + player.entclass.intelligence + player.entclass.strength)
+                    player.entclass.vitality + player.entclass.intelligence + player.entclass.strength)
         render_all()
     if spell_id == 3:  # arcane missiles
         monster = closest_monster(10)
@@ -196,7 +197,7 @@ def cast_spells(spell_id):
             return 'cancelled'
 
         message('You hit ' + monster.name + ' three times with your arcane missile. ' + monster.name + ' takes ' + str(
-                player.entclass.intelligence) + ' damage.', libtcod.light_blue)
+            player.entclass.intelligence) + ' damage.', libtcod.light_blue)
         monster.entclass.take_damage(player.entclass.intelligence)
         render_all()
 
@@ -206,7 +207,7 @@ def cast_spells(spell_id):
         if x is None: return 'cancelled'
         message('The fireball explodes, burning everything in a fiery inferno!', libtcod.orange)
 
-        for obj in objects:  # damage every fighter in range, excluding the player
+        for obj in world.objects:  # damage every fighter in range, excluding the player
             (object_x, object_y) = relative_coordinates(obj.x, obj.y)
             if obj is not player and obj.entclass is not None and -5 <= (object_x - x) <= 5 and -5 <= (
                         object_y - y) <= 5:
@@ -228,7 +229,7 @@ def cast_spells(spell_id):
 
     if spell_id == 6:  # Enormous Blast
         message('An earthquake shatters the ground, heavily damaging everyone around you.')
-        for obj in objects:
+        for obj in world.objects:
             if obj is not player and obj.entclass is not None:
                 if obj.distance_to_object(player) == 3:
                     obj.entclass.take_damage(1 * (player.entclass.agility + player.entclass.strength))
@@ -262,7 +263,7 @@ def target_monster(max_range=None):
         if x is None:
             return None
 
-        for obj in objects:
+        for obj in world.objects:
             (object_x, object_y) = relative_coordinates(obj.x, obj.y)
             if object_x == x and object_y == y and obj != player:
                 return obj
@@ -277,7 +278,6 @@ def target_tile(max_range=None):
 
         (x, y) = (mouse.cx, mouse.cy)
         if mouse.lbutton_pressed:
-            print (x, y)
             return (x, y)
 
         if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
@@ -310,7 +310,7 @@ def closest_monster(max_range):
     closest_enemy = None
     closest_dist = max_range + 1
 
-    for object in objects:
+    for object in world.objects:
         if object.entclass and not object == player:
             # calculate distance between this object and the player
             dist = player.distance_to_object(object)
@@ -358,7 +358,7 @@ def render_all():
                 tile_color = tile_list[id].colors[0]
                 if len(tile_list[id].colors) > 1:
                     value = math.degrees(
-                            (x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
+                        (x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
                     if int(value) % 2 == 1:
                         tile_color = tile_list[id].colors[1]
 
@@ -371,13 +371,13 @@ def render_all():
                 tile_variation = 0
                 if 1 < len(tile_list[id].chars) <= 2:
                     value = math.lgamma(
-                            (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                        (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
                     if int(value) % 2 == 1:
                         tile_variation = 1
 
                 elif len(tile_list[id].chars) > 2:
                     value = math.lgamma(
-                            (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                        (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
                     if int(value) % 3 == 1:
                         tile_variation = 1
                     elif int(value) % 3 == 2:
@@ -419,7 +419,7 @@ def render_all():
     calc_time()
     gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, time, color.blue)
     # perk charge
-    gui.perk_charge(side_panel, 0, 0, 0, 0, 0, 0, 0, 0)
+    gui.perk_charge(side_panel, -1,-1,-1,-1,-1,-1,-1,-1)
     # render_bar(top_panel, 1, 1, BAR_WIDTH_TOP, 'TIME', calcTime(), 24,
     #          libtcod.light_yellow, libtcod.dark_yellow)
     # display names of objects under the mouse
@@ -433,7 +433,7 @@ def render_all():
 
 
 def calc_time():
-    global time
+    global time, torch_radius
     global numClicks
 
     if numClicks % 2 == 0 and numClicks is not 0:
@@ -442,6 +442,14 @@ def calc_time():
     if time is BAR_WIDTH_TOP:
         time = 0
         numClicks = 0
+
+    if time % 8 == 0:
+        if 0 <= time <= BAR_WIDTH_TOP/2:
+            print str(time % 2)
+            torch_radius += 1
+        else:
+            print str(time % 2)
+            torch_radius -= 1
 
 
 def message(new_msg, color_msg=libtcod.white):
@@ -545,23 +553,27 @@ def handle_keys():
             # return 'player_pass'
             key_char = chr(key.c)
             player_action = 'passed'
+
+            if key_char == 'o' and not libtcod.console_is_key_pressed(key):
+                selected_option = gui.charge_menu()
+                cast_spells(selected_option)
+
             if key_char == 'p' and not libtcod.console_is_key_pressed(key):
                 # show in-game menu
-                chosen_option = gui.perk_menu('Press the key next to the perk you want to learn.\n', 1, 0)
+                chosen_option = gui.perk_menu('Press the key next to the class of perk you want to learn.\n', 1, -1)
                 if chosen_option is 0:
-                    chosen_perk = gui.perk_menu('FORTITUDE.\n', 0, 1)
+                    chosen_perk = gui.perk_menu('FORTITUDE.\n', 0, 0)
+                    player.entclass.skill_perk(0,chosen_perk)
                 elif chosen_option is 1:
                     chosen_perk = gui.perk_menu('CUNNING.\n', 0, 1)
-
+                    player.entclass.skill_perk(1,chosen_perk)
                 elif chosen_option is 2:
-                    chosen_perk = gui.perk_menu('SAVAGERY.\n', 0, 1)
+                    chosen_perk = gui.perk_menu('SAVAGERY.\n', 0, 2)
+                    player.entclass.skill_perk(2,chosen_perk)
 
             if key_char == 'i' and not libtcod.console_is_key_pressed(key):
                 # show black screen in game
                 gui.text_menu()
-
-            if key_char == 'o' and not libtcod.console_is_key_pressed(key):
-                cast_spells(6)
 
             if key_char == 'x' and not libtcod.console_is_key_pressed(key):
                 gui.save_game(player, objects)
@@ -654,7 +666,7 @@ tile_list = []
 load_tiles()
 
 global world
-world = world.World(con,tile_list)
+world = world.World(con, tile_list)
 
 # create the entity and the object of the player
 playerentity = playercharacter.PlayerEntity(hp=100, strength=5, agility=5, intelligence=5, vitality=5,
@@ -720,8 +732,8 @@ while not libtcod.console_is_window_closed():
         if game_status == 1 and player_action == 'not passed':
             for object in world.objects:
                 if object is not None:
-                    if object.ai:
-                        object.ai.take_turn()
+                    if object.entclass != None and object != player:
+                        object.entclass.take_turn(player)
     # Intro
     if game_status == 3:
         img = libtcod.image_load("data/images/intro_2.png")

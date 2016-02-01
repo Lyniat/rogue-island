@@ -2,6 +2,7 @@ import shelve
 import textwrap
 from ctypes import c_int
 from multiprocessing import Value
+
 import libtcodpy as libtcod
 from src import color
 
@@ -85,8 +86,6 @@ def render_hp_bar(panel, x, y, total_width, name, value, maximum):
                              name + ': ' + str(value) + '/' + str(maximum))
 
 
-
-
 def render_timeLine(panel, x, y, total_width, value, back_color):
     global ascii_sun
     global VISUAL_WIDTH
@@ -162,24 +161,32 @@ def menu(header, options, width):
     return None
 
 
-def perk_menu(header, options1, options2):
-    # show a menu with each item of the inventory as an option
-    # if len(inventory) == 0:
-    #   options = ['Inventory is empty.']
-    # else:
-    #    options = [item.name for item in inventory]
+# renders the charge menu
+def charge_menu():
+    options = ['Charge', 'Hurl', 'Word of Power', 'Arcane Missiles', 'Fireball', 'Frozen Tomb', 'Enormous Blast',
+               'Weapon Throw', 'Flurry']
+    index = menu('Charges', options, INVENTORY_WIDTH)
+    return index
+
+
+def perk_menu(header, options1, chosen_option):
     options = []
     if options1:
         options = ['Fortitude - Strengthens your durability', 'Cunning - Provides Utility based on Intelligence',
                    'Savagery - Improves your damage']
-    elif options2:
-        options = ['Opt 1', 'Opt 2', 'Opt 3', 'Opt 4', 'Opt 5', 'Opt 6', 'Opt 7', 'Opt 8', 'Opt 9', 'Opt 10']
+
+    if chosen_option is 0:
+        options = ['Iron Will', 'Veteran\'s Scars', 'Ignore The Pain', 'Ram', 'Stunning', 'Dungeon Basher', 'Charge',
+                   'Deflect', 'Hurl']
+    elif chosen_option is 1:
+        options = ['Paladin', 'Warmth', 'Word of Power', 'Arcane Missiles', 'Fireball', 'Frozen Tomb', 'Rogue',
+                   'Vampirism', 'Soulreaver']
+    elif chosen_option is 2:
+        options = ['Soldier', 'Combattant', 'Warmonger', 'Second Strike', 'Multistrike', 'Enormous Blast',
+                   'First Strike', 'Weapon Throw', 'Flurry']
 
     index = menu(header, options, INVENTORY_WIDTH)
 
-    # if an item was chosen, return it
-    # if index is None or len(inventory) == 0: return None
-    # return inventory[index].item
     return index
 
 
@@ -273,32 +280,34 @@ def load_game(player, map, objects):
 
     print("loaded")
 
-def perk_charge(panel, idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7):
 
-    charges = ['Arcane Missiles', 'Fireball', 'Frozen Tomb', 'Flurry', 'Enormous Blast', 'Determination', 'Smite',
-               'Blade Waltz']
+def perk_charge(panel, idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7):
+    charges = ['Charge', 'Hurl', 'Word of Power', 'Arcane Missiles', 'Fireball', 'Frozen Tomb', 'Enormous Blast',
+               'Weapon Throw', 'Flurry']
     if idx0 is not -1:
         libtcod.console_set_default_foreground(panel, color.white)
         libtcod.console_print_ex(panel, 0, 2, libtcod.BKGND_NONE, libtcod.LEFT, charges[0])
     if idx1 is not -1:
-        libtcod.console_set_default_foreground(panel, color.red)
+        libtcod.console_set_default_foreground(panel, color.gray)
         libtcod.console_print_ex(panel, 0, 5, libtcod.BKGND_NONE, libtcod.LEFT, charges[1])
     if idx2 is not -1:
-        libtcod.console_set_default_foreground(panel, color.blue)
+        libtcod.console_set_default_foreground(panel, color.aqua)
         libtcod.console_print_ex(panel, 0, 8, libtcod.BKGND_NONE, libtcod.LEFT, charges[2])
     if idx3 is not -1:
-        libtcod.console_set_default_foreground(panel, color.navy)
+        libtcod.console_set_default_foreground(panel, color.fuchsia)
         libtcod.console_print_ex(panel, 0, 11, libtcod.BKGND_NONE, libtcod.LEFT, charges[3])
     if idx4 is not -1:
-        libtcod.console_set_default_foreground(panel, color.yellow)
+        libtcod.console_set_default_foreground(panel, color.red)
         libtcod.console_print_ex(panel, 0, 14, libtcod.BKGND_NONE, libtcod.LEFT, charges[4])
     if idx5 is not -1:
-        libtcod.console_set_default_foreground(panel, color.maroon)
+        libtcod.console_set_default_foreground(panel, color.blue)
         libtcod.console_print_ex(panel, 0, 17, libtcod.BKGND_NONE, libtcod.LEFT, charges[5])
     if idx6 is not -1:
         libtcod.console_set_default_foreground(panel, color.green)
         libtcod.console_print_ex(panel, 0, 20, libtcod.BKGND_NONE, libtcod.LEFT, charges[6])
     if idx7 is not -1:
-        libtcod.console_set_default_foreground(panel, color.gray)
+        libtcod.console_set_default_foreground(panel, color.maroon)
         libtcod.console_print_ex(panel, 0, 23, libtcod.BKGND_NONE, libtcod.LEFT, charges[7])
-
+    if idx7 is not -1:
+        libtcod.console_set_default_foreground(panel, color.teal)
+        libtcod.console_print_ex(panel, 0, 26, libtcod.BKGND_NONE, libtcod.LEFT, charges[8])

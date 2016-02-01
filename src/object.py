@@ -1,10 +1,15 @@
+import math
+import random
+
+import color
+import coordinate_transformer
 import libtcodpy as libtcod
 
 
 class Object:
     # A generic objecjt representing both the player and monsters, where entclass stands for entity class
     # and defines exactly whether it's a NPC or PC.
-    def __init__(self, world, x, y, char, name, color, blocks=False, entclass=None, ai=None):
+    def __init__(self, world, x, y, char, name, color, blocks=False, entclass=None):
         self.world = world
         self.x = x
         self.y = y
@@ -12,14 +17,9 @@ class Object:
         self.color = color
         self.blocks = blocks
         self.name = name
-
         self.entclass = entclass
         if self.entclass:
             self.entclass.owner = self
-
-        self.ai = ai
-        if self.ai:
-            self.ai.owner = self
 
         self.con = world.con
 
@@ -30,11 +30,17 @@ class Object:
             self.y += dy
 
     def draw(self):
-        # set the color and then draw the character that represents this object at its position
-        (x, y) = relative_coordinates(self.x, self.y)
-        libtcod.console_set_default_foreground(con, self.color)
-        libtcod.console_put_char(con, x, y,
-                                 self.char, libtcod.BKGND_NONE)
+            if hasattr(self.entclass, 'dead') and self.entclass.dead:
+                self.char = '%'
+                self.color = color.maroon
+                self.blocks = False
+                self.entclass = None
+                self.name = 'remains of ' + self.name
+            # set the color and then draw the character that represents this object at its position
+            (x, y) = coordinate_transformer.coordinates_map_to_console(self.x, self.y)
+            libtcod.console_set_default_foreground(self.con, self.color)
+            libtcod.console_put_char(self.con, x, y,
+                                     self.char, libtcod.BKGND_NONE)
 
     def clear(self):
         # erase the character that represents this object
@@ -63,3 +69,4 @@ class Object:
 
     def distance_to_tile(self, x, y):
         return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+

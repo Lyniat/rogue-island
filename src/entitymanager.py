@@ -1,9 +1,10 @@
 import json
 import os
 import random
-import nonplayercharacter
-import object as Object
+
 import color
+from nonplayercharacter import Monster
+from object import Object as Object
 
 
 class Entitymanager():
@@ -26,7 +27,7 @@ class Entitymanager():
 
             self.monster_dict[biomes[i]].append(values)
 
-    def get_monster_at_tile(self, tile_id,x,y):
+    def get_monster_at_tile(self, world, tile_id, x, y):
         monster_list = self.monster_dict.get(tile_id)
         if monster_list is None:
             return None
@@ -34,17 +35,16 @@ class Entitymanager():
         r = random.randint(0, len(monster_list) - 1)
         monster_values = monster_list[r]
         monster_attributes = monster_values.get("Attributes")
-        print monster_attributes
         # return monster
 
-        monsterentity = nonplayercharacter.monster(hp=monster_attributes.get("HP"),
-                                                   agility=monster_attributes.get("Agility"),
-                                                   strength=monster_attributes.get("Strength"),
-                                                   intelligence=monster_attributes.get("Intelligence"),
-                                                   level=1)
-        monster = Object(x, y, monster_values.get("Char"), monster_values.get("Name"),
-                         getattr(color, monster_values.get("Color")),
-                         blocks=True, entclass=monsterentity, ai=monsterBasicAi, player=player)
+        monsterentity = Monster(hp=monster_attributes.get("HP"),
+                                agility=monster_attributes.get("Agility"),
+                                strength=monster_attributes.get("Strength"),
+                                intelligence=monster_attributes.get("Intelligence"),
+                                level=1)
 
-        print "monster: " + str(monster)
+        monster = Object(world, x, y, monster_values.get("Char"), monster_values.get("Name"),
+                         getattr(color, monster_values.get("Color")),
+                         blocks=True, entclass=monsterentity)
+
         return monster

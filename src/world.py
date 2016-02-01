@@ -1,5 +1,7 @@
 import random
+
 import entitymanager
+
 
 class World():
     def __init__(self, con, tile_list):
@@ -12,7 +14,7 @@ class World():
     def set_map(self, map):
         self.map = map
 
-    def set_player(self,player):
+    def set_player(self, player):
         self.player = player
 
     def manage_monsters(self):
@@ -36,8 +38,7 @@ class World():
                 y = self.player.y - 80
 
             tile_id = self.map[x * 512 + y]
-            monster = self.entitymanager.get_monster_at_tile(tile_id,x,y)
-            print monster
+            monster = self.entitymanager.get_monster_at_tile(self, tile_id, x, y)
             if monster is not None:
                 self.objects.append(monster)
 

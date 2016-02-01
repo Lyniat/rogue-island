@@ -161,13 +161,117 @@ class PlayerEntity(object):
 
     # Controls the experience income; the more intelligent you are, the more experience you get.
     def xpInc(self, xp):
-        self.xp += (xp * int(self.intelligence/2))
+        self.xp += (xp * int(self.intelligence / 2))
 
-        if self.xp > 10*self.level:
+        if self.xp > 10 * self.level:
             globalvars.queued_messages.append('You have levelled up!')
             self.level_up()
             self.xp -= self.level * 10
 
+    def skill_perk(self, perkclass, perk):
+        if self.points [1] > 0:
+            if perkclass == 0:
+                if perk == 0:
+                    self.perks[0][0] = 1
+                    self.points[1] -= 1
+                if perk == 1:
+                    if self.perks[0][0] == 1:
+                        self.perks[1][0] = 1
+                        self.points[1] -= 1
+                if perk == 2:
+                    if self.perks[1][0] == 1:
+                        self.perks[2][0] = 1
+                        self.points[1] -= 1
+                if perk == 3:
+                    self.perks[0][1] = 1
+                    self.points[1] -= 1
+                if perk == 4:
+                    if self.perks[0][1] == 1:
+                        self.perks[1][1] = 1
+                        self.points[1] -= 1
+                if perk == 5:
+                    if self.perks[2][1] == 1:
+                        self.perks[2][1] == 1
+                        self.points[1] -= 1
+                if perk == 6:
+                    self.perks[0][2] = 1
+                    self.points[1] -= 1
+                if perk == 7:
+                    if self.perks[0][2] == 1:
+                        self.perks[1][2] = 1
+                        self.points[1] -= 1
+                if perk == 8:
+                    if self.perks[1][2] == 1:
+                        self.perks[2][2] = 1
+                        self.points[1] -= 1
+            if perkclass == 1:
+                if perk == 0:
+                    self.perks[0][3] = 1
+                    self.points[1] -= 1
+                if perk == 1:
+                    if self.perks[0][3] == 1:
+                        self.perks[1][3] = 1
+                        self.points[1] -= 1
+                if perk == 2:
+                    if self.perks[1][3] == 1:
+                        self.perks[2][3] = 1
+                        self.points[1] -= 1
+                if perk == 3:
+                    self.perks[0][4] = 1
+                    self.points[1] -= 1
+                if perk == 4:
+                    if self.perks[0][4] == 1:
+                        self.perks[1][4] = 1
+                        self.points[1] -= 1
+                if perk == 5:
+                    if self.perks[1][4] == 1:
+                        self.perks[2][4] = 1
+                        self.points[1] -= 1
+                if perk == 6:
+                    self.perks[0][5] = 1
+                    self.points[1] -= 1
+                if perk == 7:
+                    if self.perks[0][5] == 1:
+                        self.perks[1][5] = 1
+                        self.points[1] -= 1
+                if perk == 8:
+                    if self.perks[1][5] == 1:
+                        self.perks[2][5] = 1
+                        self.points[1] -= 1
+            if perkclass == 2:
+                if perk == 0:
+                    self.perks[0][6] = 1
+                    self.points[1] -= 1
+                if perk == 1:
+                    if self.perks[0][6] == 1:
+                        self.perks[1][6] = 1
+                        self.points[1] -= 1
+                if perk == 2:
+                    if self.perks[1][6] == 1:
+                        self.perks[2][6] = 1
+                        self.points[1] -= 1
+                if perk == 3:
+                    self.perks[0][7] = 1
+                    self.points[1] -= 1
+                if perk == 4:
+                    if self.perks[0][7] == 1:
+                        self.perks[1][7] = 1
+                        self.points[1] -= 1
+                if perk == 5:
+                    if self.perks[1][7] == 1:
+                        self.perks[2][7] = 1
+                        self.points[1] -= 1
+                if perk == 6:
+                    self.perks[0][8] = 1
+                    self.points[1] -= 1
+                if perk == 7:
+                    if self.perks[0][8] == 1:
+                       self.perks[1][8] = 1
+                       self.points[1] -= 1
+                if perk == 8:
+                    if self.perks[1][8] == 1:
+                        self.perks[2][8] = 1
+                        self.points[1] -= 1
 
 """
 Explanation for the Perk Tree:
