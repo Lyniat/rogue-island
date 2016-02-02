@@ -38,9 +38,6 @@ PANEL_SIDE_X_POS = VISUAL_WIDTH
 PANEL_SIDE_Y_POS = 0
 
 LIMIT_FPS = 120  # 120 frames-per-second maximum (for testing)
-
-FOV_ALGO = 0  # default FOV algorithm
-FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
 MAX_MONSTERS = 20
 
@@ -50,10 +47,16 @@ top_panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT_TOP)
 side_panel = libtcod.console_new(PANEL_SIDE_WIDTH, PANEL_SIDE_HEIGHT)
 numKlicks = 0
 time = 0
+# graphical elements relevant for HP and XP bar
 ascii_block = 176
 ascii_sun = 15
 i = 1
-max_range = 21
+
+# variables relevant for bar representation
+max_range_hp = 19
+max_range_xp = 0
+hp_step_count = 1
+xp_step_count = 1
 
 game_status = 1  # 0 = generator, 1 = game, 2 = menu
 
@@ -63,26 +66,47 @@ game_msgs = []
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 
+def render_exp_bar(panel, x, y, total_width, name, value, maximum):
+    global ascii_block
+    global xp_step_count
+    global max_range_xp
+    default_x = x
+
+    steps = maximum / 20
+
+    if value > xp_step_count * steps:
+        max_range_xp = xp_step_count * steps
+        xp_step_count += 1
+
+    if xp_step_count >= maximum:
+        xp_step_count = 0
+    for num in range(max_range_xp):
+        libtcod.console_put_char_ex(panel, x, y, ascii_block, color.yellow, color.black)
+        x += 1
+
+    libtcod.console_set_default_foreground(panel, color.white)
+    libtcod.console_print_ex(panel, default_x + total_width / 2, y + 1, libtcod.BKGND_NONE, libtcod.CENTER,
+                             name + ': ' + str(value) + '/' + str(maximum))
+
+
 def render_hp_bar(panel, x, y, total_width, name, value, maximum):
     global ascii_block
-    # render a bar (HP, experience, etc). first calculate the width of the bar
-    global i
-    global max_range
-    default_X = x
-    # max_range = 21
-    steps = maximum / 21
-    # print steps
-    if value < (maximum - i * steps):
-        max_range -= 1
-        i += 1
+    global hp_step_count
+    global max_range_hp
+    default_x = x
+    steps = maximum / 19
+
+    if value < (maximum - hp_step_count * steps):
+        max_range_hp -= 1
+        hp_step_count += 1
 
     if value > 0:
-        for num in range(max_range):
+        for num in range(max_range_hp):
             libtcod.console_put_char_ex(panel, x, y, ascii_block, color.red, color.black)
             x += 1
 
     libtcod.console_set_default_foreground(panel, color.white)
-    libtcod.console_print_ex(panel, default_X + total_width / 2, y + 1, libtcod.BKGND_NONE, libtcod.CENTER,
+    libtcod.console_print_ex(panel, default_x + total_width / 2, y + 1, libtcod.BKGND_NONE, libtcod.CENTER,
                              name + ': ' + str(value) + '/' + str(maximum))
 
 

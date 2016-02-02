@@ -97,16 +97,18 @@ class PlayerEntity(object):
                 globalvars.queued_messages.append(
                     'You start to feel the pain, and suffer ' + str(self.dmgot) + ' damage. The pain wears off.')
 
-        if self.hp <= 0 and self.perks[0][0] == 1 or self.hp <= -10 and self.perks[0][0] == 1:
+        if self.hp <= 0 and self.perks[0][0] == 0 or self.hp <= -10 and self.perks[0][0] == 1:
             function = self.on_death
+            print 'die'
             if function is not None:
+                print 'really die'
                 function(self.owner)
 
     def attack(self, target, time=None):
         if random.randint(0, self.agility) > random.randint(0, target.entclass.agility):
-            damage = self.strength * random.randint(1, self.intelligence) - target.entclass.strength
+            damage = self.strength * random.randint(1, self.intelligence) - random.randint(0, target.entclass.strength)
         else:
-            damage = self.strength - target.entclass.strength
+            damage = self.strength - random.randint(0, target.entclass.strength)
 
         # Ram Perk
         if self.perks[1][0] == 1:
@@ -174,104 +176,131 @@ class PlayerEntity(object):
                 if perk == 0:
                     self.perks[0][0] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('You have learnt how to cheat death.')
                 if perk == 1:
                     if self.perks[0][0] == 1:
                         self.perks[1][0] = 1
                         self.points[1] -= 1
+                    globalvars.queued_messages.append('Your scars strengthen your body.')
                 if perk == 2:
                     if self.perks[1][0] == 1:
                         self.perks[2][0] = 1
                         self.points[1] -= 1
+                    globalvars.queued_messages.append('You have learnt to ignore pain!')
                 if perk == 3:
                     self.perks[0][1] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('You ram your enemies from now on.')
                 if perk == 4:
                     if self.perks[0][1] == 1:
                         self.perks[1][1] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You can stun your enemies now.')
                 if perk == 5:
                     if self.perks[2][1] == 1:
                         self.perks[2][1] == 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You can push your enemies back with sheer force.')
                 if perk == 6:
                     self.perks[0][2] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('You can now charge to your enemies!')
                 if perk == 7:
                     if self.perks[0][2] == 1:
                         self.perks[1][2] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You sometimes reflect any incoming damage.')
                 if perk == 8:
                     if self.perks[1][2] == 1:
                         self.perks[2][2] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You can throw your enemies around!')
             if perkclass == 1:
                 if perk == 0:
                     self.perks[0][3] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('You deal more damage at day!')
                 if perk == 1:
                     if self.perks[0][3] == 1:
                         self.perks[1][3] = 1
                         self.points[1] -= 1
+                    globalvars.queued_messages.append('You slowly regenerate life at day.')
                 if perk == 2:
                     if self.perks[1][3] == 1:
                         self.perks[2][3] = 1
                         self.points[1] -= 1
+                    globalvars.queued_messages.append('You can call forth a powerful blast of energy!')
                 if perk == 3:
                     self.perks[0][4] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('You can create homing Arcane Missiles.')
                 if perk == 4:
                     if self.perks[0][4] == 1:
                         self.perks[1][4] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You are able to throw a devastating fireball.')
                 if perk == 5:
                     if self.perks[1][4] == 1:
                         self.perks[2][4] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You can suck all warmth out of a foe\'s body.')
                 if perk == 6:
                     self.perks[0][5] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('You deal more damage at night.')
                 if perk == 7:
                     if self.perks[0][5] == 1:
                         self.perks[1][5] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You gain life when slaying an enemy.')
                 if perk == 8:
                     if self.perks[1][5] == 1:
                         self.perks[2][5] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You steal your enemy\'s souls.')
             if perkclass == 2:
                 if perk == 0:
                     self.perks[0][6] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('Your attacks are faster now, resulting in more damage.')
                 if perk == 1:
                     if self.perks[0][6] == 1:
                         self.perks[1][6] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('~~~NOT IMPLEMENTED~~~')
                 if perk == 2:
                     if self.perks[1][6] == 1:
                         self.perks[2][6] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You feel the urge to kill rising...')
                 if perk == 3:
                     self.perks[0][7] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('You can attack without retaliation.')
                 if perk == 4:
                     if self.perks[0][7] == 1:
                         self.perks[1][7] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('Your strikes possibly pierce your enemy.')
                 if perk == 5:
                     if self.perks[1][7] == 1:
                         self.perks[2][7] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('You can summon a powerful earthquake around you.')
                 if perk == 6:
                     self.perks[0][8] = 1
                     self.points[1] -= 1
+                    globalvars.queued_messages.append('You can sometimes retaliate an attack.')
                 if perk == 7:
                     if self.perks[0][8] == 1:
                        self.perks[1][8] = 1
                        self.points[1] -= 1
+                       globalvars.queued_messages.append('You can throw your weapon.')
                 if perk == 8:
                     if self.perks[1][8] == 1:
                         self.perks[2][8] = 1
                         self.points[1] -= 1
+                        globalvars.queued_messages.append('~~~NOT IMPLEMENTED~~~')
 
 """
 Explanation for the Perk Tree:

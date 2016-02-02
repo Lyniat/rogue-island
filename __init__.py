@@ -40,7 +40,7 @@ INVENTORY_WIDTH = 50
 
 LIMIT_FPS = 30  # 30 frames-per-second
 
-FOV_ALGO = 0  # default FOV algorithm
+FOV_ALGO = 1  # default FOV algorithm
 FOV_LIGHT_WALLS = True
 torch_radius = 10
 MAX_MONSTERS = 20
@@ -144,13 +144,13 @@ def attackmove(dx, dy):
 
     if target is not None:
         if player.entclass.perks[2][1] == 1:
-            if is_blocked(target.x - 1, target.y):
+            if tile_list[map[(target.x - 1) * MAP_SIZE + target.y]].move_blocked:
                 globalvars.monster_proximity_block[3] = 1
-            if is_blocked(target.x + 1, target.y):
+            if tile_list[map[(target.x + 1) * MAP_SIZE + target.y]].move_blocked:
                 globalvars.monster_proximity_block[1] = 1
-            if is_blocked(target.x, target.y - 1):
+            if tile_list[map[(target.x) * MAP_SIZE + target.y - 1]].move_blocked:
                 globalvars.monster_proximity_block[0] = 1
-            if is_blocked(target.x, target.y + 1):
+            if tile_list[map[(target.x) * MAP_SIZE + target.y + 1]].move_blocked:
                 globalvars.monster_proximity_block[2] = 1
 
         player.entclass.attack(target)
@@ -160,101 +160,122 @@ def attackmove(dx, dy):
 
 def cast_spells(spell_id):
     if spell_id == 0:  # charge
-        message('Left-click an enemy to charge it.', libtcod.light_cyan)
-        monster = target_monster()
-        if monster is not None:
-            while player.distance_to_object(monster) > 1:
-                player.move_towards(monster)
-            player.entclass.attack(monster)
-        else:
-            message('You did not charge.', libtcod.white)
+        if player.entclass.perks[0][2] == 1:
+            message('Left-click an enemy to charge it.', libtcod.light_cyan)
+            monster = target_monster()
+            if monster is not None:
+                while player.distance_to_object(monster) > 1:
+                    player.move_towards(monster)
+                player.entclass.attack(monster)
+            else:
+                message('You did not charge.', libtcod.white)
 
-        render_all()
+            render_all()
+        else:
+            message('Your feet won\'t carry you fast enough.')
 
     if spell_id == 1:  # hurl
-        message('Left-click an enemy to hurl it around.', libtcod.light_cyan)
-        monster = target_monster(max_range=1)
-        if monster is not None:
-            monster.x += random.randint(-3, 3)
-            monster.y += random.randint(-3, 3)
-            monster.entclass.take_damage(player.entclass.vitality * 10)
-            message('You hurl your enemy around, dealing massive ' + str(player.entclass.vitality * 10) + ' damage!')
+        if player.entclass.perks[2][2] == 1:
+            message('Left-click an enemy to hurl it around.', libtcod.light_cyan)
+            monster = target_monster(max_range=1)
+            if monster is not None:
+                monster.x += random.randint(-3, 3)
+                monster.y += random.randint(-3, 3)
+                monster.entclass.take_damage(player.entclass.vitality * 10)
+                message('You hurl your enemy around, dealing massive ' + str(player.entclass.vitality * 10) + ' damage!')
+            else:
+                message('You did not hurl anything.', libtcod.white)
         else:
-            message('You did not hurl anything.', libtcod.white)
+            message('You lack the necessary strength to hurl your enemy.')
     if spell_id == 2:  # word of power
-        for obj in world.objects:  # damage every monster in range
-            if obj is not player and obj.distance_to_object(player) <= 10:
-                message('The ' + obj.name + ' gets struck by the wave of energy and suffers ' + str(
-                    player.entclass.intelligence + player.entclass.vitality + player.entclass.strength) + ' damage.',
-                        libtcod.orange)
-                obj.entclass.take_damage(
-                    player.entclass.vitality + player.entclass.intelligence + player.entclass.strength)
-        render_all()
+        if player.entclass.perks[2][3] == 1:
+            for obj in world.objects:  # damage every monster in range
+                if obj is not player and obj.distance_to_object(player) <= 10:
+                    message('The ' + obj.name + ' gets struck by the wave of energy and suffers ' + str(
+                        player.entclass.intelligence + player.entclass.vitality + player.entclass.strength) + ' damage.',
+                            color.fuchsia)
+                    obj.entclass.take_damage(
+                        player.entclass.vitality + player.entclass.intelligence + player.entclass.strength)
+            render_all()
+        else:
+            message('You have no idea of Words of Power.')
     if spell_id == 3:  # arcane missiles
-        monster = closest_monster(10)
-        if monster is None:  # no enemy found within maximum range
-            message('No enemy is close enough to aim at.', libtcod.red)
-            return 'cancelled'
+        if player.entclass.perks[0][4] == 1:
+            monster = closest_monster(10)
+            if monster is None:  # no enemy found within maximum range
+                message('No enemy is close enough to aim at.', color.red)
+                return 'cancelled'
 
-        message('You hit ' + monster.name + ' three times with your arcane missile. ' + monster.name + ' takes ' + str(
-            player.entclass.intelligence) + ' damage.', libtcod.light_blue)
-        monster.entclass.take_damage(player.entclass.intelligence)
-        render_all()
-
+            message('You hit ' + monster.name + ' three times with your arcane missile. ' + monster.name + ' takes ' + str(
+                player.entclass.intelligence) + ' damage.', color.aqua)
+            monster.entclass.take_damage(player.entclass.intelligence)
+            render_all()
+        else:
+            message('You have not learned the arts of arcane missiles.')
     if spell_id == 4:  # fireball
-        message('Left-click a target tile for the fireball, or right-click to cancel.', libtcod.light_cyan)
-        (x, y) = target_tile()
-        if x is None: return 'cancelled'
-        message('The fireball explodes, burning everything in a fiery inferno!', libtcod.orange)
+        if player.entclass.perks[1][4] == 1:
+            message('Left-click a target tile for the fireball, or right-click to cancel.', color.white)
+            (x, y) = target_tile()
+            if x is None: return 'cancelled'
+            message('The fireball explodes, burning everything in a fiery inferno!', color.maroon)
 
-        for obj in world.objects:  # damage every fighter in range, excluding the player
-            (object_x, object_y) = relative_coordinates(obj.x, obj.y)
-            if obj is not player and obj.entclass is not None and -5 <= (object_x - x) <= 5 and -5 <= (
-                        object_y - y) <= 5:
-                message('The ' + obj.name + ' gets burned for ' + str(player.entclass.intelligence) + ' hit points.',
-                        libtcod.orange)
-                obj.entclass.take_damage(player.entclass.intelligence)
-            elif obj is player:
-                player.entclass.hp += player.entclass.intelligence
-        render_all()
+            for obj in world.objects:  # damage every fighter in range, excluding the player
+                (object_x, object_y) = relative_coordinates(obj.x, obj.y)
+                if obj is not player and obj.entclass is not None and -5 <= (object_x - x) <= 5 and -5 <= (
+                            object_y - y) <= 5:
+                    message('The ' + obj.name + ' gets burned for ' + str(player.entclass.intelligence) + ' hit points.',
+                            color.maroon)
+                    obj.entclass.take_damage(player.entclass.intelligence)
+                elif obj is player:
+                    player.entclass.hp += player.entclass.intelligence
+            render_all()
+        else:
+            message('You move your hands around, but nothing happens. No fireball for you!')
 
     if spell_id == 5:  # Frozen Tomb
-        message('Left-click an enemy to freeze it to death.', libtcod.dark_blue)
-        monster = target_monster()
-        if monster is not None:
-            monster.entclass.frozentomb = 1
+        if player.entclass.perks[2][4] == 1:
+            message('Left-click an enemy to freeze it to death.', color.blue)
+            monster = target_monster()
+            if monster is not None:
+                monster.entclass.frozentomb = 1
+            else:
+                message('You did not use your power.', color.white)
+            render_all()
         else:
-            message('You did not use your power.', libtcod.white)
-        render_all()
-
+            message('You try to concentrate, but you fail miserably.')
     if spell_id == 6:  # Enormous Blast
-        message('An earthquake shatters the ground, heavily damaging everyone around you.')
-        for obj in world.objects:
-            if obj is not player and obj.entclass is not None:
-                if obj.distance_to_object(player) == 3:
-                    obj.entclass.take_damage(1 * (player.entclass.agility + player.entclass.strength))
-                    message('The earthquake barely reaches ' + str(obj.name) +
-                            ' and damages it for ' + str(1 * (player.entclass.agility + player.entclass.strength)))
-                if obj.distance_to_object(player) == 2:
-                    obj.entclass.take_damage(2 * (player.entclass.agility + player.entclass.strength))
-                    message('The earthquake reaches ' + str(obj.name) +
-                            ' and damages it for ' + str(2 * (player.entclass.agility + player.entclass.strength)))
-                if obj.distance_to_object(player) == 1:
-                    obj.entclass.take_damage(4 * (player.entclass.agility + player.entclass.strength))
-                    message('The earthquake devastates ' + str(obj.name) +
-                            ' and damages it for ' + str(4 * (player.entclass.agility + player.entclass.strength)))
-        render_all()
-
-    if spell_id == 7:  # Weapon Throw
-        message('Left-click an enemy to throw your weapon at it.', libtcod.light_cyan)
-        monster = target_monster()
-        if monster is not None:
-            player.entclass.attack(monster)
-            message('You concentrate and find your weapon in your hand again. And you are not even a wizard!')
+        if player.entclass.perks[2][7] == 1:
+            message('An earthquake shatters the ground, heavily damaging everyone around you.')
+            for obj in world.objects:
+                if obj is not player and obj.entclass is not None:
+                    if obj.distance_to_object(player) == 3:
+                        obj.entclass.take_damage(1 * (player.entclass.agility + player.entclass.strength))
+                        message('The earthquake barely reaches ' + str(obj.name) +
+                                ' and damages it for ' + str(1 * (player.entclass.agility + player.entclass.strength)))
+                    if obj.distance_to_object(player) == 2:
+                        obj.entclass.take_damage(2 * (player.entclass.agility + player.entclass.strength))
+                        message('The earthquake reaches ' + str(obj.name) +
+                                ' and damages it for ' + str(2 * (player.entclass.agility + player.entclass.strength)))
+                    if obj.distance_to_object(player) == 1:
+                        obj.entclass.take_damage(4 * (player.entclass.agility + player.entclass.strength))
+                        message('The earthquake devastates ' + str(obj.name) +
+                                ' and damages it for ' + str(4 * (player.entclass.agility + player.entclass.strength)))
+            render_all()
         else:
-            message('You could not bear losing your beloved weapon.', libtcod.white)
+            message('You smash your hand into the ground, but absolutely nothing happens.')
+    if spell_id == 7:  # Weapon Throw
+        if player.entclass.perks[1][8] == 1:
+            message('Left-click an enemy to throw your weapon at it.', color.white)
+            monster = target_monster()
+            if monster is not None:
+                player.entclass.attack(monster)
+                message('You concentrate and find your weapon in your hand again. And you are not even a wizard!')
+            else:
+                message('You could not bear losing your beloved weapon.', color.white)
 
-        render_all()
+            render_all()
+        else:
+            message('The fear to lose your weapon absolutely scares you.')
 
 
 def target_monster(max_range=None):
@@ -285,10 +306,12 @@ def target_tile(max_range=None):
 
 
 def game_over(player):
+    global game_status
+    print 'really, really die'
     message('You died!')
     player.char = '%'
     player.color = libtcod.dark_red
-
+    game_status = 4
 
 def monster_death(monster):
     message(str.capitalize(monster.name) + ' is dead!')
@@ -349,48 +372,56 @@ def render_all():
         # recompute FOV if needed (the player moved or something)
         fov_recompute = False
         libtcod.map_compute_fov(fov_map, player.x, player.y, torch_radius, FOV_LIGHT_WALLS, FOV_ALGO)
+        libtcod.console_clear(con)
         # go through all tiles, and set their color
         for y in range(VISUAL_HEIGHT):
             for x in range(VISUAL_WIDTH):
-                visible = libtcod.map_is_in_fov(fov_map, x, y)
+                (map_x, map_y) = (player.x + x - VISUAL_WIDTH / 2, player.y + y - VISUAL_HEIGHT / 2)
+                visible = libtcod.map_is_in_fov(fov_map, map_x, map_y)
                 # wall = map[x][y].block_sight
                 id = visual[x][y]
-                tile_color = tile_list[id].colors[0]
-                if len(tile_list[id].colors) > 1:
-                    value = math.degrees(
-                        (x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
-                    if int(value) % 2 == 1:
-                        tile_color = tile_list[id].colors[1]
+                if not visible:
+                    # it's out of the player's FOV
+                    libtcod.console_set_char_background(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET,
+                                                        color.black, libtcod.BKGND_SET)
+                else:
+                    tile_color = tile_list[id].colors[0]
+                    if len(tile_list[id].colors) > 1:
+                        value = math.degrees(
+                            (x + player.x - VISUAL_WIDTH / 2) + (y + player.y - VISUAL_HEIGHT / 2) * MAP_SIZE)
+                        if int(value) % 2 == 1:
+                            tile_color = tile_list[id].colors[1]
 
-                # animate if two colors
-                if tile_list[id].animation_color != "":
-                    r = random.randrange(2)
-                    if r >= 1:
-                        tile_color = tile_list[id].animation_color
+                    # animate if two colors
+                    if tile_list[id].animation_color != "":
+                        r = random.randrange(2)
+                        if r >= 1:
+                            tile_color = tile_list[id].animation_color
 
-                tile_variation = 0
-                if 1 < len(tile_list[id].chars) <= 2:
-                    value = math.lgamma(
-                        (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
-                    if int(value) % 2 == 1:
-                        tile_variation = 1
+                    tile_variation = 0
+                    if 1 < len(tile_list[id].chars) <= 2:
+                        value = math.lgamma(
+                            (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                        if int(value) % 2 == 1:
+                            tile_variation = 1
 
-                elif len(tile_list[id].chars) > 2:
-                    value = math.lgamma(
-                        (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
-                    if int(value) % 3 == 1:
-                        tile_variation = 1
-                    elif int(value) % 3 == 2:
-                        tile_variation = 2
+                    elif len(tile_list[id].chars) > 2:
+                        value = math.lgamma(
+                            (x + player.x - VISUAL_WIDTH / 2) * MAP_SIZE + (y + player.y - VISUAL_HEIGHT / 2))
+                        if int(value) % 3 == 1:
+                            tile_variation = 1
+                        elif int(value) % 3 == 2:
+                            tile_variation = 2
 
-                libtcod.console_set_default_foreground(con, getattr(color, tile_color))
-                libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET,
-                                         int(tile_list[id].chars[tile_variation]),
-                                         libtcod.BKGND_NONE)
+                    libtcod.console_set_default_foreground(con, getattr(color, tile_color))
+                    libtcod.console_put_char(con, x + VISUAL_WIDTH_OFFSET, y + VISUAL_HEIGHT_OFFSET,
+                                             int(tile_list[id].chars[tile_variation]),
+                                             libtcod.BKGND_NONE)
 
     for object in world.objects:
         if object != player:
-            object.draw()
+            if libtcod.map_is_in_fov(fov_map, object.x, object.y):
+                object.draw()
         player.draw()
 
     # blit the contents of "con" to the root console
@@ -414,12 +445,12 @@ def render_all():
     # show the player's stats
     gui.render_hp_bar(bottom_panel, 1, 1, BAR_WIDTH, 'HP', player.entclass.hp, player.entclass.max_hp)
     # shows exp
-    # gui.render_exp_bar(bottom_panel, 1, 3, BAR_WIDTH, 'XP', playr.entclass.xp, player.entclass.level * 10
+    gui.render_exp_bar(bottom_panel, 1, 3, BAR_WIDTH, 'XP', player.entclass.xp, player.entclass.level * 20)
     # shows the time
     calc_time()
     gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, time, color.blue)
     # perk charge
-    gui.perk_charge(side_panel, -1,-1,-1,-1,-1,-1,-1,-1)
+    gui.perk_charge(side_panel, -1, -1, -1, -1, -1, -1, -1, -1)
     # render_bar(top_panel, 1, 1, BAR_WIDTH_TOP, 'TIME', calcTime(), 24,
     #          libtcod.light_yellow, libtcod.dark_yellow)
     # display names of objects under the mouse
@@ -444,7 +475,7 @@ def calc_time():
         numClicks = 0
 
     if time % 8 == 0:
-        if 0 <= time <= BAR_WIDTH_TOP/2:
+        if 0 <= time <= BAR_WIDTH_TOP / 2:
             print str(time % 2)
             torch_radius += 1
         else:
@@ -560,16 +591,16 @@ def handle_keys():
 
             if key_char == 'p' and not libtcod.console_is_key_pressed(key):
                 # show in-game menu
-                chosen_option = gui.perk_menu('Press the key next to the class of perk you want to learn.\n', 1, -1)
+                chosen_option = gui.perk_menu('Press the key next to the class of perk you want to learn. Points: ' + str(player.entclass.points[1]) + '\n', 1, -1)
                 if chosen_option is 0:
                     chosen_perk = gui.perk_menu('FORTITUDE.\n', 0, 0)
-                    player.entclass.skill_perk(0,chosen_perk)
+                    player.entclass.skill_perk(0, chosen_perk)
                 elif chosen_option is 1:
                     chosen_perk = gui.perk_menu('CUNNING.\n', 0, 1)
-                    player.entclass.skill_perk(1,chosen_perk)
+                    player.entclass.skill_perk(1, chosen_perk)
                 elif chosen_option is 2:
                     chosen_perk = gui.perk_menu('SAVAGERY.\n', 0, 2)
-                    player.entclass.skill_perk(2,chosen_perk)
+                    player.entclass.skill_perk(2, chosen_perk)
 
             if key_char == 'i' and not libtcod.console_is_key_pressed(key):
                 # show black screen in game
@@ -649,6 +680,16 @@ def main_menu():
             return
 
 
+def generate_fov_map():
+    global fov_recompute, fov_map
+    fov_recompute = True
+    fov_map = libtcod.map_new(MAP_SIZE, MAP_SIZE)
+    for y in range(MAP_SIZE):
+        for x in range(MAP_SIZE):
+            libtcod.map_set_properties(fov_map, x, y, not tile_list[map[x * MAP_SIZE + y]].sight_blocked,
+                                       not tile_list[map[x * MAP_SIZE + y]].move_blocked)
+
+
 #############################################
 # Initialization & Main Loop
 #############################################
@@ -696,10 +737,9 @@ if game_status == 1:
 
     fov_map = libtcod.map_new(VISUAL_HEIGHT, VISUAL_WIDTH)
 
-    for y in range(VISUAL_HEIGHT):
-        for x in range(VISUAL_WIDTH):
-            libtcod.map_set_properties(fov_map, x, y, not tile_list[map[x * MAP_SIZE + y]].sight_blocked,
-                                       not tile_list[map[x * MAP_SIZE + y]].move_blocked)
+    generate_fov_map()
+
+    libtcod.console_clear(con)
 
 while not libtcod.console_is_window_closed():
 
@@ -733,7 +773,15 @@ while not libtcod.console_is_window_closed():
             for object in world.objects:
                 if object is not None:
                     if object.entclass != None and object != player:
-                        object.entclass.take_turn(player)
+                        if libtcod.map_is_in_fov(fov_map, object.x, object.y):
+                            object.entclass.last_coordinates = None
+                            object.entclass.move_to(player)
+                        else:
+                            if object.entclass.last_coordinates is not None:
+                                object.entclass.move_to(player, object.entclass.last_coordinates)
+                            else:
+                                object.entclass.last_coordinates = (player.x, player.y)
+                                object.entclass.move_to(player, object.entclass.last_coordinates)
     # Intro
     if game_status == 3:
         img = libtcod.image_load("data/images/intro_2.png")

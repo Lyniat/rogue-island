@@ -1,5 +1,5 @@
-import color
-
+import globalvars
+import random
 
 class Monster(object):
     def __init__(self, hp, level, agility, strength, intelligence, on_death=None, player=None):
@@ -13,23 +13,24 @@ class Monster(object):
         self.frozentomb = 0
         self.player = player
         self.dead = False
+        self.last_coordinates = (0, 0)
 
     def take_damage(self, dmg):
         if dmg > 0:
             self.hp -= dmg
 
     def attack(self, target):
-        if self.agility > target.entclass.agility:
-            damage = self.strength * 2 - target.entclass.strength
+        if random.randint(0, self.agility) > random.randint(0, target.entclass.agility):
+            damage = self.strength * random.randint(1, self.intelligence) - random.randint(0, target.entclass.strength)
         else:
-            damage = self.strength - target.entclass.strength
+            damage = self.strength - random.randint(0, target.entclass.strength)
 
         if damage > 0:
             target.entclass.take_damage(self, damage)
         else:
             print self.owner.name.capitalize() + ' attacks you, but without any effect.'
 
-    def take_turn(self, player):
+    def move_to(self, player, x=0, y=0):
         monster = self.owner
         if not self.dead:
             if self.hp <= 0:
@@ -38,15 +39,18 @@ class Monster(object):
             else:
                 if monster.entclass.frozentomb == 1:
                     monster.entclass.take_damage(player.entclass.intelligence)
-                    ###(monster.name + ' freezes slowly until death.')
+                    globalvars.queued_messages.append(monster.name + ' freezes slowly until death.')
                 elif monster.entclass.stunned == 0:
                     if monster.distance_to_object(player) >= 2:
-                        monster.move_towards(player)
+                        if self.last_coordinates is None:
+                            monster.move_towards_object(player)
+                        else:
+                            monster.move_towards_tile(self.last_coordinates)
                     elif player.entclass.hp > 0:
                         monster.entclass.attack(player)
                 elif monster.entclass.stunned == 1:
                     monster.entclass.stunned = 0
-                    ###(monster.name + ' breaks free of its confusion.')
+                    globalvars.queued_messages.append(monster.name + ' breaks free of its confusion.')
 
     def monster_death(self, player):
         # Vampirism Perk
