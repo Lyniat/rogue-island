@@ -670,6 +670,9 @@ def main_menu():
         if choice == 0:
             # generate map
             game_status = 0
+            global info_text
+            info_text = Info_text("                                                                              ")
+            generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
             return game_status
 
         if choice == 1:  # new game
@@ -749,6 +752,7 @@ tile_list = []
 load_tiles()
 
 global world
+global info_text
 world = world.World(con, tile_list)
 
 # create the entity and the object of the player
@@ -757,10 +761,6 @@ playerentity = playercharacter.PlayerEntity(hp=100, strength=5, agility=5, intel
                                             on_death=game_over)
 player = Player(world, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, '@', 'player', libtcod.white, blocks=True,
                 entclass=playerentity)
-
-if game_status == 0:
-    info_text = Info_text("                                                                              ")
-    generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
 
 if game_status == 1:
     create_game()

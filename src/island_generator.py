@@ -18,9 +18,18 @@ shared_tilemap = None
 processor_num = 0
 
 
+########################
+#
+# Info:
+# Prozentzahl die im Menue angezeigt wird muss ueberarbeitet werden.
+# Eigentlicher Algorithmus funktioniert jedoch. Status kann in der Console gesehen werden.
+#
+########################
+
+
 #################
 #
-# structure of tile vars
+# structure of tile vars (at the moment not used but planned to be used in future
 # fffeeedddccccbbaaa
 #  3  3  3  4  2  3  = 18
 # f = objectId, e = region details, d = biomeID, c = height, b = tileVariation, a = tileId
@@ -91,7 +100,7 @@ def initialize(map_size, info):
     global MUSHROOM_CELLULAR_ITERATIONS
     MUSHROOM_CELLULAR_ITERATIONS = int(config.get("BiomeAttributes", "MushroomCellularIterations"))
 
-    # update_text = "initialized"
+    update_text = "initialized"
     # info_text.set(update_text)
 
 
@@ -251,9 +260,6 @@ def generate_noise(process_id, processes, tilemap, percent, steps):
             # pixels[x, y] = (color, color, color)
 
             percent.value += 1
-
-            # update_text = "generating noise: " + str(to_percent((x * 1.0) / size)) + "%%"
-            # info_text.set(update_text)
 
     # img.save('noise_map.png')
 
