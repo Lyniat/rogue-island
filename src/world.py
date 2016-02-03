@@ -1,4 +1,5 @@
 import random
+import math
 
 import entitymanager
 
@@ -18,6 +19,7 @@ class World():
         self.player = player
 
     def manage_monsters(self):
+        # create monsters
         if len(self.objects) < 30:
             r = random.randrange(4)
 
@@ -41,6 +43,18 @@ class World():
             monster = self.entitymanager.get_monster_at_tile(self, tile_id, x, y)
             if monster is not None:
                 self.objects.append(monster)
+
+        # delete monsters
+        for monster in self.objects:
+            distance = math.abs(self.player.x - monster.x)
+            if distance > 93:
+                self.objects.remove(monster)
+
+            distance = math.abs(self.player.y - monster.y)
+            if distance > 93:
+                self.objects.remove(monster)
+
+
 
     def is_field_blocked(self, x, y):
         MAP_SIZE = 512  # UGLY JUST FOR TESTING

@@ -10,11 +10,18 @@ import libtcodpy as libtcod
 from src import color, island_generator, loader, playercharacter, tiles, gui, globalvars, \
     object, world
 
+#############################################
+#
+# Dieses Spiel basiert teilweise auf dem Python-libtcod-Tutorial von Roguebasin
+# http://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod
+#
+#############################################
+
 # actual size of the window
 SCREEN_WIDTH = 90
 SCREEN_HEIGHT = 65
 
-FONT_SIZE = 8  # 8 = small, 12 = normal, 16 = big
+FONT_SIZE = 12  # 8 = small, 12 = normal, 16 = big
 
 # size of the map
 MAP_SIZE = 512
@@ -639,11 +646,9 @@ def update_info(text):
 
 # returns selected option
 def main_menu():
-    img = libtcod.image_load('menu_background.png')
     global game_status
+    global map
     while not libtcod.console_is_window_closed():
-        # show the background image, at twice the regular console resolution
-        libtcod.image_blit_2x(img, 0, 0, 0)
 
         # show the game's title, and some credits!
         libtcod.console_set_default_foreground(0, libtcod.light_yellow)
@@ -665,6 +670,8 @@ def main_menu():
             player.x = 100
             player.y = 100
 
+            create_game()
+
             return game_status
         if choice == 2:  # load last game
             try:
@@ -675,19 +682,44 @@ def main_menu():
                 continue
             game_status = 1
 
+            create_game()
+
             return game_status
         elif choice == 3:  # quit
             return
 
 
 def generate_fov_map():
-    global fov_recompute, fov_map
+    global fov_recompute
+    global fov_map
     fov_recompute = True
     fov_map = libtcod.map_new(MAP_SIZE, MAP_SIZE)
     for y in range(MAP_SIZE):
         for x in range(MAP_SIZE):
             libtcod.map_set_properties(fov_map, x, y, not tile_list[map[x * MAP_SIZE + y]].sight_blocked,
                                        not tile_list[map[x * MAP_SIZE + y]].move_blocked)
+
+def create_game():
+    global tile_list
+    global game_msgs
+    global world
+    game_msgs = []
+    message('Welcome to Rogue Island!', color.yellow)
+    map = loader.load_map()
+
+    world.set_map(map)
+    world.set_player(player)
+
+    world.objects.append(player)
+
+    globalvars.player_x = player.x
+    globalvars.player_y = player.y
+
+    make_visual_map()
+
+    generate_fov_map()
+
+    libtcod.console_clear(con)
 
 
 #############################################
@@ -696,7 +728,7 @@ def generate_fov_map():
 
 libtcod.console_set_custom_font('data/fonts/terminal' + str(FONT_SIZE) + 'x' + str(FONT_SIZE) + '_gs_ro.png',
                                 libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
-libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'ASCII Adventure', False)
+libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Rogue Island', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
@@ -721,25 +753,7 @@ if game_status == 0:
     generator_thread = thread.start_new_thread(island_generator.start, (MAP_SIZE, shared_percent))
 
 if game_status == 1:
-    game_msgs = []
-    message('Welcome to Rogue Island!', color.yellow)
-    map = loader.load_map()
-
-    world.set_map(map)
-    world.set_player(player)
-
-    world.objects.append(player)
-
-    globalvars.player_x = player.x
-    globalvars.player_y = player.y
-
-    make_visual_map()
-
-    fov_map = libtcod.map_new(VISUAL_HEIGHT, VISUAL_WIDTH)
-
-    generate_fov_map()
-
-    libtcod.console_clear(con)
+    create_game()
 
 while not libtcod.console_is_window_closed():
 
@@ -760,10 +774,6 @@ while not libtcod.console_is_window_closed():
         for object in world.objects:
             object.clear()
 
-        ###########################
-        # DRAW INTERFACE HERE
-        ###########################
-
         # handle keys and exit game if needed
         exit = handle_keys()
 
@@ -782,6 +792,11 @@ while not libtcod.console_is_window_closed():
                             else:
                                 object.entclass.last_coordinates = (player.x, player.y)
                                 object.entclass.move_to(player, object.entclass.last_coordinates)
+
+    # Menu
+    if game_status == 2:
+        main_menu()
+
     # Intro
     if game_status == 3:
         img = libtcod.image_load("data/images/intro_2.png")
