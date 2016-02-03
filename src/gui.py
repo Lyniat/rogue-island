@@ -305,33 +305,38 @@ def load_game(player, map, objects):
     print("loaded")
 
 
-def perk_charge(panel, idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7):
-    charges = ['Charge', 'Hurl', 'Word of Power', 'Arcane Missiles', 'Fireball', 'Frozen Tomb', 'Enormous Blast',
-               'Weapon Throw', 'Flurry']
-    if idx0 is not -1:
-        libtcod.console_set_default_foreground(panel, color.white)
+def perk_charge(panel, healthpots, idx0, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8):
+    charges = ['Health Pots: ' + str(healthpots), 'Charge' + str(idx0), 'Hurl' + str(idx0), 'Word of Power' + str(idx0),
+               'Arcane Missiles' + str(idx0), 'Fireball' + str(idx0), 'Frozen Tomb' + str(idx0),
+               'Enormous Blast' + str(idx0),
+               'Weapon Throw' + str(idx0), 'Flurry' + str(idx0)]
+    if healthpots is not -1:
+        libtcod.console_set_default_foreground(panel, color.red)
         libtcod.console_print_ex(panel, 0, 2, libtcod.BKGND_NONE, libtcod.LEFT, charges[0])
-    if idx1 is not -1:
+    if idx0 is not -1:
         libtcod.console_set_default_foreground(panel, color.gray)
         libtcod.console_print_ex(panel, 0, 5, libtcod.BKGND_NONE, libtcod.LEFT, charges[1])
-    if idx2 is not -1:
+    if idx1 is not -1:
         libtcod.console_set_default_foreground(panel, color.aqua)
         libtcod.console_print_ex(panel, 0, 8, libtcod.BKGND_NONE, libtcod.LEFT, charges[2])
-    if idx3 is not -1:
+    if idx2 is not -1:
         libtcod.console_set_default_foreground(panel, color.fuchsia)
         libtcod.console_print_ex(panel, 0, 11, libtcod.BKGND_NONE, libtcod.LEFT, charges[3])
-    if idx4 is not -1:
+    if idx3 is not -1:
         libtcod.console_set_default_foreground(panel, color.red)
         libtcod.console_print_ex(panel, 0, 14, libtcod.BKGND_NONE, libtcod.LEFT, charges[4])
-    if idx5 is not -1:
+    if idx4 is not -1:
         libtcod.console_set_default_foreground(panel, color.blue)
         libtcod.console_print_ex(panel, 0, 17, libtcod.BKGND_NONE, libtcod.LEFT, charges[5])
-    if idx6 is not -1:
+    if idx5 is not -1:
         libtcod.console_set_default_foreground(panel, color.green)
         libtcod.console_print_ex(panel, 0, 20, libtcod.BKGND_NONE, libtcod.LEFT, charges[6])
-    if idx7 is not -1:
+    if idx6 is not -1:
         libtcod.console_set_default_foreground(panel, color.maroon)
         libtcod.console_print_ex(panel, 0, 23, libtcod.BKGND_NONE, libtcod.LEFT, charges[7])
     if idx7 is not -1:
         libtcod.console_set_default_foreground(panel, color.teal)
         libtcod.console_print_ex(panel, 0, 26, libtcod.BKGND_NONE, libtcod.LEFT, charges[8])
+    if idx8 is not -1:
+        libtcod.console_set_default_foreground(panel, color.teal)
+        libtcod.console_print_ex(panel, 0, 29, libtcod.BKGND_NONE, libtcod.LEFT, charges[9])

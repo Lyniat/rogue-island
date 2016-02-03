@@ -1,11 +1,11 @@
 import csv
 import math
 import random
+import sys
 import textwrap
 import thread
 from ctypes import c_int
 from multiprocessing import Value
-import sys
 
 import libtcodpy as libtcod
 from src import color, island_generator, loader, playercharacter, tiles, gui, globalvars, \
@@ -335,6 +335,10 @@ def monster_death(monster):
     monster.ai = None
     monster.name = 'remains of ' + monster.name
 
+    if random.randint(0, 100) <= 20:
+        player.entclass.pots += 1
+        message('You found a health pot. (U to use it)')
+
 
 def closest_monster(max_range):
     closest_enemy = None
@@ -457,7 +461,7 @@ def render_all():
     calc_time()
     gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, time, color.blue)
     # perk charge
-    gui.perk_charge(side_panel, -1, -1, -1, -1, -1, -1, -1, -1)
+    gui.perk_charge(side_panel, player.entclass.pots, -1, -1, -1, -1, -1, -1, -1, -1, -1)
 
     # display names of objects under the mouse
     libtcod.console_set_default_foreground(bottom_panel, libtcod.light_gray)
@@ -468,9 +472,6 @@ def render_all():
     libtcod.console_blit(top_panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT_TOP, 0, 0, PANEL_TOP)
     libtcod.console_blit(side_panel, 0, 0, SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT, 0, VISUAL_WIDTH, 0)
 
-    if player.entclass.hp <= 0 and player.entclass.perks[0][0] == 0 or player.entclass.hp <= -10 and player.entclass.perks[0][0] == 1:
-        global game_status
-        game_status = 4
 
 def calc_time():
     global time, torch_radius
@@ -590,7 +591,6 @@ def handle_keys():
             fov_recompute = True
             player_action = 'not passed'
         else:
-            # return 'player_pass'
             key_char = chr(key.c)
             player_action = 'passed'
 
@@ -613,6 +613,9 @@ def handle_keys():
                     chosen_perk = gui.perk_menu('SAVAGERY.\n', 0, 2)
                     player.entclass.skill_perk(2, chosen_perk)
 
+            if key_char == 'u' and not libtcod.console_is_key_pressed(key):
+                player.entclass.take_pot()
+
             if key_char == 'i' and not libtcod.console_is_key_pressed(key):
                 # show black screen in game
                 gui.text_menu()
@@ -624,9 +627,6 @@ def handle_keys():
             if key_char == 'd' and not libtcod.console_is_key_pressed(key):  # debug key
                 pass
 
-    if game_status == 4:
-        if libtcod.console_is_key_pressed(libtcod.KEY_UP):
-            sys.exit()
 
 
 def load_tiles():
