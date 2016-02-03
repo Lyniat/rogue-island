@@ -20,40 +20,41 @@ class World():
 
     def manage_monsters(self):
         # create monsters
-        if len(self.objects) < 30:
-            r = random.randrange(4)
+        if len(self.objects) < 70:
+            for i in range(7):
+                r = random.randint(1,4)
 
-            if r < 1:
-                x = self.player.x + 80
-                y = self.player.y + 80 + random.randrange(-10, 10)
+                if r == 1:
+                    x = self.player.x + 40
+                    y = self.player.y + random.randrange(-10, 10)
 
-            if 1 <= r < 2:
-                x = self.player.x - 80
-                y = self.player.y + 80 + random.randrange(-10, 10)
+                if r == 2:
+                    x = self.player.x - 40
+                    y = self.player.y + random.randrange(-10, 10)
 
-            if 2 <= r < 3:
-                x = self.player.x + 80 + random.randrange(-10, 10)
-                y = self.player.y + 80
+                if r == 3:
+                    x = self.player.x + random.randrange(-10, 10)
+                    y = self.player.y + 40
 
-            if 3 <= r < 4:
-                x = self.player.x + 80 + random.randrange(-10, 10)
-                y = self.player.y - 80
+                if r == 4:
+                    x = self.player.x + random.randrange(-10, 10)
+                    y = self.player.y - 40
 
-            tile_id = self.map[x * 512 + y]
-            monster = self.entitymanager.get_monster_at_tile(self, tile_id, x, y)
-            if monster is not None:
-                self.objects.append(monster)
+                tile_id = self.map[x * 512 + y]
+                monster = self.entitymanager.get_monster_at_tile(self, tile_id, x, y)
+                if monster is not None:
+                    self.objects.append(monster)
+                print 'Length Objects:' + str(len(self.objects))
 
         # delete monsters
         for monster in self.objects:
-            distance = math.abs(self.player.x - monster.x)
+            distance = abs(self.player.x - monster.x)
             if distance > 93:
                 self.objects.remove(monster)
 
-            distance = math.abs(self.player.y - monster.y)
+            distance = abs(self.player.y - monster.y)
             if distance > 93:
                 self.objects.remove(monster)
-
 
 
     def is_field_blocked(self, x, y):

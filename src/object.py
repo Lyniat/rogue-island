@@ -69,14 +69,14 @@ class Object:
         dx = int(round(x / distance))
         dy = int(round(y / distance))
         if math.fabs(dx) > math.fabs(dy):
-            self.move(dx, 0)
+            self.move(1, 0)
         elif math.fabs(dx) < math.fabs(dy):
-            self.move(0, dy)
+            self.move(0, 1)
         else:
             if random.randint(0, 1) == 1:
-                self.move(dx, 0)
+                self.move(1, 0)
             else:
-                self.move(0, dy)
+                self.move(0, 1)
 
     def distance_to_object(self, other):
         dx = other.x - self.x

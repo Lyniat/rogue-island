@@ -5,6 +5,7 @@ import textwrap
 import thread
 from ctypes import c_int
 from multiprocessing import Value
+import sys
 
 import libtcodpy as libtcod
 from src import color, island_generator, loader, playercharacter, tiles, gui, globalvars, \
@@ -21,7 +22,7 @@ from src import color, island_generator, loader, playercharacter, tiles, gui, gl
 SCREEN_WIDTH = 90
 SCREEN_HEIGHT = 65
 
-FONT_SIZE = 12  # 8 = small, 12 = normal, 16 = big
+FONT_SIZE = 8  # 8 = small, 12 = normal, 16 = big
 
 # size of the map
 MAP_SIZE = 512
@@ -61,7 +62,7 @@ time = 1
 mouse = libtcod.Mouse()
 key = libtcod.Key()
 player_action = 'not passed'
-game_status = 1  # 0 = generator, 1 = game, 2 = menu, 3 = intro
+game_status = 2  # 0 = generator, 1 = game, 2 = menu, 3 = intro
 fov_recompute = True
 
 shared_percent = Value(c_int)
@@ -172,7 +173,7 @@ def cast_spells(spell_id):
             monster = target_monster()
             if monster is not None:
                 while player.distance_to_object(monster) > 1:
-                    player.move_towards(monster)
+                    player.move_towards_object(monster)
                 player.entclass.attack(monster)
             else:
                 message('You did not charge.', libtcod.white)
@@ -189,7 +190,8 @@ def cast_spells(spell_id):
                 monster.x += random.randint(-3, 3)
                 monster.y += random.randint(-3, 3)
                 monster.entclass.take_damage(player.entclass.vitality * 10)
-                message('You hurl your enemy around, dealing massive ' + str(player.entclass.vitality * 10) + ' damage!')
+                message(
+                    'You hurl your enemy around, dealing massive ' + str(player.entclass.vitality * 10) + ' damage!')
             else:
                 message('You did not hurl anything.', libtcod.white)
         else:
@@ -213,8 +215,9 @@ def cast_spells(spell_id):
                 message('No enemy is close enough to aim at.', color.red)
                 return 'cancelled'
 
-            message('You hit ' + monster.name + ' three times with your arcane missile. ' + monster.name + ' takes ' + str(
-                player.entclass.intelligence) + ' damage.', color.aqua)
+            message(
+                'You hit ' + monster.name + ' three times with your arcane missile. ' + monster.name + ' takes ' + str(
+                    player.entclass.intelligence) + ' damage.', color.aqua)
             monster.entclass.take_damage(player.entclass.intelligence)
             render_all()
         else:
@@ -230,8 +233,9 @@ def cast_spells(spell_id):
                 (object_x, object_y) = relative_coordinates(obj.x, obj.y)
                 if obj is not player and obj.entclass is not None and -5 <= (object_x - x) <= 5 and -5 <= (
                             object_y - y) <= 5:
-                    message('The ' + obj.name + ' gets burned for ' + str(player.entclass.intelligence) + ' hit points.',
-                            color.maroon)
+                    message(
+                        'The ' + obj.name + ' gets burned for ' + str(player.entclass.intelligence) + ' hit points.',
+                        color.maroon)
                     obj.entclass.take_damage(player.entclass.intelligence)
                 elif obj is player:
                     player.entclass.hp += player.entclass.intelligence
@@ -313,12 +317,8 @@ def target_tile(max_range=None):
 
 
 def game_over(player):
-    global game_status
-    print 'really, really die'
-    message('You died!')
-    player.char = '%'
-    player.color = libtcod.dark_red
-    game_status = 4
+    sys.exit()
+
 
 def monster_death(monster):
     message(str.capitalize(monster.name) + ' is dead!')
@@ -358,7 +358,7 @@ def update_visual_map():
             map_y = y + player.y - VISUAL_HEIGHT / 2
 
             if map_x < size and map_y < size:
-                visual[x][y] = map[map_x * size + map_y]
+                visual[x][y] = world.map[map_x * size + map_y]
 
 
 def make_visual_map():
@@ -452,14 +452,13 @@ def render_all():
     # show the player's stats
     gui.render_hp_bar(bottom_panel, 1, 1, BAR_WIDTH, 'HP', player.entclass.hp, player.entclass.max_hp)
     # shows exp
-    gui.render_exp_bar(bottom_panel, 1, 3, BAR_WIDTH, 'XP', player.entclass.xp, player.entclass.level * 20)
+    gui.render_exp_bar(bottom_panel, 1, 3, BAR_WIDTH, 'XP', player.entclass.xp, player.entclass.level * 10)
     # shows the time
     calc_time()
     gui.render_timeLine(top_panel, 0, 0, BAR_WIDTH_TOP, time, color.blue)
     # perk charge
     gui.perk_charge(side_panel, -1, -1, -1, -1, -1, -1, -1, -1)
-    # render_bar(top_panel, 1, 1, BAR_WIDTH_TOP, 'TIME', calcTime(), 24,
-    #          libtcod.light_yellow, libtcod.dark_yellow)
+
     # display names of objects under the mouse
     libtcod.console_set_default_foreground(bottom_panel, libtcod.light_gray)
     libtcod.console_print_ex(bottom_panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, '')
@@ -469,6 +468,9 @@ def render_all():
     libtcod.console_blit(top_panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT_TOP, 0, 0, PANEL_TOP)
     libtcod.console_blit(side_panel, 0, 0, SIDE_PANEL_WIDTH, SIDE_PANEL_HEIGHT, 0, VISUAL_WIDTH, 0)
 
+    if player.entclass.hp <= 0 and player.entclass.perks[0][0] == 0 or player.entclass.hp <= -10 and player.entclass.perks[0][0] == 1:
+        global game_status
+        game_status = 4
 
 def calc_time():
     global time, torch_radius
@@ -553,7 +555,7 @@ def handle_keys():
     global numClicks
     # key = libtcod.console_check_for_keypress()  #real-time
     key = libtcod.console_wait_for_keypress(True)  # turn-based
-    global player_action
+    global player_action, game_status
     global fov_recompute
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         # Alt+Enter: toggle fullscreen
@@ -598,7 +600,9 @@ def handle_keys():
 
             if key_char == 'p' and not libtcod.console_is_key_pressed(key):
                 # show in-game menu
-                chosen_option = gui.perk_menu('Press the key next to the class of perk you want to learn. Points: ' + str(player.entclass.points[1]) + '\n', 1, -1)
+                chosen_option = gui.perk_menu(
+                    'Press the key next to the class of perk you want to learn. Points: ' + str(
+                        player.entclass.points[1]) + '\n', 1, -1)
                 if chosen_option is 0:
                     chosen_perk = gui.perk_menu('FORTITUDE.\n', 0, 0)
                     player.entclass.skill_perk(0, chosen_perk)
@@ -619,6 +623,10 @@ def handle_keys():
 
             if key_char == 'd' and not libtcod.console_is_key_pressed(key):  # debug key
                 pass
+
+    if game_status == 4:
+        if libtcod.console_is_key_pressed(libtcod.KEY_UP):
+            sys.exit()
 
 
 def load_tiles():
@@ -650,7 +658,7 @@ def main_menu():
     global map
     while not libtcod.console_is_window_closed():
 
-        # show the game's title, and some credits!
+        # show the game's title
         libtcod.console_set_default_foreground(0, libtcod.light_yellow)
         libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 4, libtcod.BKGND_NONE, libtcod.CENTER,
                                  'ROGUE ISLAND')
@@ -692,12 +700,14 @@ def main_menu():
 def generate_fov_map():
     global fov_recompute
     global fov_map
+    global world
     fov_recompute = True
     fov_map = libtcod.map_new(MAP_SIZE, MAP_SIZE)
     for y in range(MAP_SIZE):
         for x in range(MAP_SIZE):
-            libtcod.map_set_properties(fov_map, x, y, not tile_list[map[x * MAP_SIZE + y]].sight_blocked,
-                                       not tile_list[map[x * MAP_SIZE + y]].move_blocked)
+            libtcod.map_set_properties(fov_map, x, y, not tile_list[world.map[x * MAP_SIZE + y]].sight_blocked,
+                                       not tile_list[world.map[x * MAP_SIZE + y]].move_blocked)
+
 
 def create_game():
     global tile_list
@@ -788,10 +798,10 @@ while not libtcod.console_is_window_closed():
                             object.entclass.move_to(player)
                         else:
                             if object.entclass.last_coordinates is not None:
-                                object.entclass.move_to(player, object.entclass.last_coordinates)
+                                object.move_towards_tile(object.entclass.last_coordinates)
                             else:
                                 object.entclass.last_coordinates = (player.x, player.y)
-                                object.entclass.move_to(player, object.entclass.last_coordinates)
+                                object.move_towards_tile(object.entclass.last_coordinates)
 
     # Menu
     if game_status == 2:

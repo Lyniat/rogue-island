@@ -41,7 +41,8 @@ class Entitymanager():
                                 agility=monster_attributes.get("Agility"),
                                 strength=monster_attributes.get("Strength"),
                                 intelligence=monster_attributes.get("Intelligence"),
-                                level=1)
+                                level=1,
+                                name = monster_values.get("Name"))
 
         monster = Object(world, x, y, monster_values.get("Char"), monster_values.get("Name"),
                          getattr(color, monster_values.get("Color")),

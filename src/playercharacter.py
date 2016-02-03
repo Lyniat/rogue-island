@@ -41,7 +41,9 @@ class PlayerEntity(object):
         # Warmth Perk
         if self.perks[1][3] and self.hp < self.max_hp and time is not None and 19 < time < 57:
             self.hp += 1
-
+        # Iron Will Perk
+        if self.perks[0][0] == 1 and self.hp <= 0:
+            self.hp -= 1
         # Soul Reaver Perk Decay and Gain on time
         if self.perks[2][5] == 1:
             if time == 1:
@@ -56,6 +58,7 @@ class PlayerEntity(object):
                 self.souls = 0
 
     def take_damage(self, source, dmg):
+        enemy_name = str(source.name)
         # Warmonger Perk chance to fall in bloodlust
         if self.perks[2][6] == 1 and random.randint(0, 100) <= 10 and self.bloodlust == 0:
             globalvars.queued_messages.append('WAAAAAAAAAR! I NEED BLOOD!')
@@ -67,18 +70,18 @@ class PlayerEntity(object):
             # deflect perk
             if self.perks[2][1] == 1 and random.randint(0, 1) == 1:
                 source.take_damage(dmg)
-                globalvars.queued_messages.append('You successfully retaliate your enemy\'s attack!')
+                globalvars.queued_messages.append('You successfully retaliate ' + enemy_name + '\'s attack!')
             # Ignore the Pain perk chance to transform into dot
             if self.perks[2][0] == 1 and random.randint(0, 100) <= 20:
                 self.dmgot = dmg
-                globalvars.queued_messages.append('You are attacked, but you ignore the pain.')
+                globalvars.queued_messages.append('You are attacked by ' + enemy_name + ', but you ignore the pain.')
             else:
                 self.hp -= dmg
-                globalvars.queued_messages.append('You take ' + str(dmg) + ' damage.')
+                globalvars.queued_messages.append('You take ' + str(dmg) + ' damage from' + enemy_name + '.')
             if self.perks[0][8] == 1:
                 source.take_damage(self.agility)
                 globalvars.queued_messages.append(
-                    'You quickly slice against your enemy! Your enemy takes ' + str(self.agility) + ' damage.')
+                    'You quickly slice against ' + enemy_name + ' for ' + str(self.agility) + ' damage.')
         # Ignore the Pain perk ongoing DoT
         if self.dmgot > 0:
             if self.dmgot % 3 == 0:
@@ -98,13 +101,10 @@ class PlayerEntity(object):
                     'You start to feel the pain, and suffer ' + str(self.dmgot) + ' damage. The pain wears off.')
 
         if self.hp <= 0 and self.perks[0][0] == 0 or self.hp <= -10 and self.perks[0][0] == 1:
-            function = self.on_death
-            print 'die'
-            if function is not None:
-                print 'really die'
-                function(self.owner)
+            self.on_death(self)
 
     def attack(self, target, time=None):
+        enemy_name = str(target.name)
         if random.randint(0, self.agility) > random.randint(0, target.entclass.agility):
             damage = self.strength * random.randint(1, self.intelligence) - random.randint(0, target.entclass.strength)
         else:
@@ -148,7 +148,7 @@ class PlayerEntity(object):
         # Stunning Perk
         if self.perks[1][1] == 1 and random.randint(0, 100) <= 20:
             target.entclass.stunned = 1
-            globalvars.queued_messages.append('You have overwhelmed your enemy, stunning it.')
+            globalvars.queued_messages.append('You have overwhelmed ' + enemy_name + ', stunning it.')
         # Bloodlust Perk
         if self.bloodlust > 0:
             damage *= 4
@@ -157,7 +157,7 @@ class PlayerEntity(object):
                 globalvars.queued_messages.append('Your thirst for blood has been quenched.')
         if damage > 0:
             target.entclass.take_damage(damage)
-            globalvars.queued_messages.append('You attack your enemy for ' + str(damage) + ' damage.')
+            globalvars.queued_messages.append('You attack ' + enemy_name + '  for ' + str(damage) + '.')
         else:
             pass
 
@@ -166,12 +166,12 @@ class PlayerEntity(object):
         self.xp += (xp * int(self.intelligence / 2))
 
         if self.xp > 10 * self.level:
-            globalvars.queued_messages.append('You have levelled up!')
+            globalvars.queued_messages.append('You have levelled up! (\'P\' for perks)')
             self.level_up()
             self.xp -= self.level * 10
 
     def skill_perk(self, perkclass, perk):
-        if self.points [1] > 0:
+        if self.points[1] > 0:
             if perkclass == 0:
                 if perk == 0:
                     self.perks[0][0] = 1
@@ -293,14 +293,15 @@ class PlayerEntity(object):
                     globalvars.queued_messages.append('You can sometimes retaliate an attack.')
                 if perk == 7:
                     if self.perks[0][8] == 1:
-                       self.perks[1][8] = 1
-                       self.points[1] -= 1
-                       globalvars.queued_messages.append('You can throw your weapon.')
+                        self.perks[1][8] = 1
+                        self.points[1] -= 1
+                        globalvars.queued_messages.append('You can throw your weapon.')
                 if perk == 8:
                     if self.perks[1][8] == 1:
                         self.perks[2][8] = 1
                         self.points[1] -= 1
                         globalvars.queued_messages.append('~~~NOT IMPLEMENTED~~~')
+
 
 """
 Explanation for the Perk Tree:

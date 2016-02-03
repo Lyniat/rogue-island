@@ -2,18 +2,19 @@ import globalvars
 import random
 
 class Monster(object):
-    def __init__(self, hp, level, agility, strength, intelligence, on_death=None, player=None):
+    def __init__(self, hp, level, agility, strength, intelligence, on_death=None, player=None, name = None):
         self.hp = hp
         self.level = level
         self.agility = agility
         self.strength = strength
         self.intelligence = intelligence
         self.on_death = on_death
+        self.name = name
         self.stunned = 0
         self.frozentomb = 0
         self.player = player
         self.dead = False
-        self.last_coordinates = (0, 0)
+        self.last_coordinates = (random.randint(0,100), random.randint(0,100))
 
     def take_damage(self, dmg):
         if dmg > 0:
@@ -28,7 +29,7 @@ class Monster(object):
         if damage > 0:
             target.entclass.take_damage(self, damage)
         else:
-            print self.owner.name.capitalize() + ' attacks you, but without any effect.'
+            globalvars.queued_messages.append(self.owner.name.capitalize() + ' attacks you, but without any effect.')
 
     def move_to(self, player, x=0, y=0):
         monster = self.owner
